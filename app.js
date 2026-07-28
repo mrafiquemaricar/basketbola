@@ -1,7 +1,7 @@
 /**
- * Basketbola - Web Basketball Arcade Game Engine
- * Features: 2PT & 3PT Shooting Spots, Canvas Physics, Arc Trajectory,
- * Scoreboard, Streaks, Particle FX, Web Audio Sound Synthesis.
+ * Basketbola - Web & Mobile Basketball Arcade Game Engine
+ * Features: 2PT & 3PT Shooting Spots, Canvas Physics, Touch & Haptic Controls,
+ * Arc Trajectory, Scoreboard, Streaks, Particle FX, Web Audio Sound Synthesis.
  */
 
 (function () {
@@ -20,7 +20,7 @@
   const shotTypeBadge = document.getElementById('shot-type-badge');
   const shotTypeText = document.getElementById('shot-type-text');
   const shotPointsTag = document.getElementById('shot-points-tag');
-  const nextSpotName = document.getElementById('next-spot-name');
+  const spotBtnLabel = document.getElementById('spot-btn-label');
   const powerMeterWrapper = document.getElementById('power-meter-wrapper');
   const powerMeterFill = document.getElementById('power-meter-fill');
   const shotResultBanner = document.getElementById('shot-result-banner');
@@ -29,7 +29,7 @@
   const soundToggleBtn = document.getElementById('sound-toggle-btn');
   const soundIcon = document.getElementById('sound-icon');
 
-  // On-screen Buttons
+  // On-screen Touch Buttons
   const btnToggleSpot = document.getElementById('btn-toggle-spot');
   const btnAngleDown = document.getElementById('btn-angle-down');
   const btnAngleUp = document.getElementById('btn-angle-up');
@@ -48,6 +48,16 @@
     }
     if (audioCtx && audioCtx.state === 'suspended') {
       audioCtx.resume();
+    }
+  }
+
+  function triggerHaptic(ms = 25) {
+    if (navigator.vibrate) {
+      try {
+        navigator.vibrate(ms);
+      } catch (e) {
+        // ignore
+      }
     }
   }
 
@@ -83,7 +93,6 @@
     if (!audioCtx) return;
 
     try {
-      // Metal clang sound using two sine oscillators
       const osc1 = audioCtx.createOscillator();
       const osc2 = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
@@ -116,7 +125,6 @@
     if (!audioCtx) return;
 
     try {
-      // Noise burst filtered to sound like net swish
       const bufferSize = audioCtx.sampleRate * 0.25;
       const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
       const output = buffer.getChannelData(0);
@@ -191,8 +199,8 @@
 
   // Shooting Locations
   const SPOTS = {
-    '3pt': { x: 160, label: '3-POINTER SPOT', points: 3, nextLabel: '2PT' },
-    '2pt': { x: 420, label: '2-POINTER SPOT', points: 2, nextLabel: '3PT' }
+    '3pt': { x: 160, label: '3-POINTER SPOT', points: 3, nextLabel: 'Switch to 2PT' },
+    '2pt': { x: 420, label: '2-POINTER SPOT', points: 2, nextLabel: 'Switch to 3PT' }
   };
 
   let state = {
@@ -204,11 +212,12 @@
     currentSpotKey: '3pt',
     angle: 52, // launch angle in degrees
     power: 0, // 0 to 100
-    powerDirection: 1.5, // charging speed
+    powerDirection: 1.6, // charging speed
     isCharging: false,
     soundOn: true,
     bannerTimeout: null,
-    netSwishTimer: 0
+    netSwishTimer: 0,
+    touchStartY: 0
   };
 
   // Ball Object
@@ -258,7 +267,7 @@
       const p = particles[i];
       p.x += p.vx;
       p.y += p.vy;
-      p.vy += 0.15; // slight gravity
+      p.vy += 0.15;
       p.life -= p.decay;
       if (p.life <= 0) {
         particles.splice(i, 1);
@@ -293,7 +302,7 @@
     // Update Badge & UI
     shotTypeText.textContent = spot.label;
     shotPointsTag.textContent = `+${spot.points} PTS`;
-    nextSpotName.textContent = spot.nextLabel;
+    if (spotBtnLabel) spotBtnLabel.textContent = spot.nextLabel;
 
     if (spotKey === '3pt') {
       shotPointsTag.style.background = 'var(--accent-orange)';
@@ -301,6 +310,7 @@
       shotPointsTag.style.background = 'var(--accent-cyan)';
     }
 
+    triggerHaptic(15);
     resetBall();
   }
 
@@ -313,12 +323,14 @@
     if (ball.inAir) return;
     state.angle = Math.max(30, Math.min(80, state.angle + delta));
     angleDisplay.textContent = `${state.angle}°`;
+    triggerHaptic(10);
   }
 
   // --- Shooting Mechanics ---
   function startCharging() {
     if (ball.inAir || state.isCharging) return;
     initAudio();
+    triggerHaptic(20);
     state.isCharging = true;
     state.power = 0;
     state.powerDirection = 1.6;
@@ -332,13 +344,12 @@
     state.isCharging = false;
     powerMeterWrapper.classList.remove('charging');
     if (btnShoot) btnShoot.classList.remove('active');
+    triggerHaptic(30);
 
     // Launch calculation
     const spot = SPOTS[state.currentSpotKey];
     const powerRatio = state.power / 100;
     
-    // Base speed scaled for canvas distance
-    // 3pt distance is ~670px, 2pt distance is ~410px
     const minVel = spotKeyVelocityMin(state.currentSpotKey);
     const maxVel = spotKeyVelocityMax(state.currentSpotKey);
     const v0 = minVel + powerRatio * (maxVel - minVel);
@@ -367,12 +378,11 @@
 
   // --- Physics & Collision Engine ---
   function updatePhysics() {
-    // Power Meter animation loop while spacebar is held down
     if (state.isCharging) {
       state.power += state.powerDirection;
       if (state.power >= 100) {
         state.power = 100;
-        state.powerDirection = -1.6; // Ping-pong back if overcharged!
+        state.powerDirection = -1.6;
       } else if (state.power <= 0) {
         state.power = 0;
         state.powerDirection = 1.6;
@@ -386,11 +396,9 @@
 
     if (!ball.inAir) return;
 
-    // Ball motion trail
     ball.trail.push({ x: ball.x, y: ball.y });
     if (ball.trail.length > 8) ball.trail.shift();
 
-    // Sub-step physics integration for fine rim accuracy
     const steps = 4;
     const gravity = 0.45 / steps;
 
@@ -421,10 +429,10 @@
       checkRimPointCollision(rimFront);
       checkRimPointCollision(rimBack);
 
-      // 3. Score Detection (Passes down through rim plane)
+      // 3. Score Detection
       if (
         !ball.scored &&
-        ball.vy > 0 && // moving downwards
+        ball.vy > 0 &&
         ball.prevY < COURT.hoopY &&
         ball.y >= COURT.hoopY &&
         ball.x > rimFront.x + 5 &&
@@ -433,14 +441,13 @@
         handleScoreSuccess();
       }
 
-      // 4. Floor Collision / Out of bounds reset
+      // 4. Floor Collision
       if (ball.y + ball.radius >= COURT.floorY) {
         ball.y = COURT.floorY - ball.radius;
-        ball.vy = -ball.vy * 0.5; // floor bounce
+        ball.vy = -ball.vy * 0.5;
         ball.vx = ball.vx * 0.7;
         playBounceSound();
 
-        // If stopped or moving very slow on floor, handle shot completion
         if (Math.abs(ball.vy) < 1 && Math.abs(ball.vx) < 1) {
           setTimeout(() => {
             if (ball.inAir) handleShotFinished();
@@ -449,7 +456,6 @@
         }
       }
 
-      // Screen boundaries
       if (ball.x > canvas.width + 50 || ball.x < -50 || ball.y > canvas.height + 50) {
         handleShotFinished();
         break;
@@ -466,15 +472,12 @@
     const minDist = ball.radius + COURT.rimRadius;
 
     if (dist < minDist && dist > 0) {
-      // Normal collision vector
       const nx = dx / dist;
       const ny = dy / dist;
 
-      // Reposition out of overlap
       ball.x = rimPt.x + nx * minDist;
       ball.y = rimPt.y + ny * minDist;
 
-      // Reflect velocity
       const dot = ball.vx * nx + ball.vy * ny;
       ball.vx = (ball.vx - 2 * dot * nx) * 0.7;
       ball.vy = (ball.vy - 2 * dot * ny) * 0.7;
@@ -496,8 +499,9 @@
       localStorage.setItem('basketbola_highscore', state.highScore.toString());
     }
 
-    state.netSwishTimer = 25; // Trigger net deform animation
+    state.netSwishTimer = 25;
     createSwishParticles(COURT.hoopX - COURT.rimWidth / 2, COURT.hoopY + 10);
+    triggerHaptic(50);
 
     if (ball.hitBackboard && !ball.hitRim) {
       showResultBanner(`BANK SHOT! +${pts}`, 'swish');
@@ -520,7 +524,6 @@
   function handleShotFinished() {
     if (ball.scored) return;
 
-    // Shot missed
     state.streak = 0;
     if (!ball.hitRim && !ball.hitBackboard) {
       showResultBanner('AIRBALL!', 'miss');
@@ -546,7 +549,6 @@
     scoreDisplay.textContent = state.score;
     highScoreDisplay.textContent = state.highScore;
 
-    // Streak UI with hot glow
     if (state.streak >= 3) {
       streakDisplay.textContent = `${state.streak} 🔥`;
       streakContainer.classList.add('hot');
@@ -555,7 +557,6 @@
       streakContainer.classList.remove('hot');
     }
 
-    // Accuracy
     const pct = state.shotsTaken > 0 ? Math.round((state.shotsMade / state.shotsTaken) * 100) : 0;
     accuracyDisplay.textContent = `${pct}%`;
   }
@@ -576,7 +577,6 @@
   }
 
   function drawBackgroundStadium() {
-    // Stadium gradient background
     const bgGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
     bgGrad.addColorStop(0, '#0a0d1a');
     bgGrad.addColorStop(0.6, '#121729');
@@ -584,7 +584,6 @@
     ctx.fillStyle = bgGrad;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Stadium light glow effects
     ctx.save();
     const lightGrad1 = ctx.createRadialGradient(830, 80, 10, 830, 80, 300);
     lightGrad1.addColorStop(0, 'rgba(255, 255, 255, 0.15)');
@@ -599,7 +598,6 @@
   function drawCourtFloor() {
     const floorY = COURT.floorY;
 
-    // Wooden Court Floor Gradient
     const floorGrad = ctx.createLinearGradient(0, floorY, 0, canvas.height);
     floorGrad.addColorStop(0, '#c67d34');
     floorGrad.addColorStop(0.15, '#a66224');
@@ -607,7 +605,6 @@
     ctx.fillStyle = floorGrad;
     ctx.fillRect(0, floorY, canvas.width, canvas.height - floorY);
 
-    // Floor top polish line
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
     ctx.lineWidth = 2;
     ctx.beginPath();
@@ -615,11 +612,9 @@
     ctx.lineTo(canvas.width, floorY);
     ctx.stroke();
 
-    // 3-Point Arc & Key Lines on Court
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
     ctx.lineWidth = 3;
 
-    // 3PT Line
     ctx.beginPath();
     ctx.moveTo(COURT.threePointLineX, floorY);
     ctx.lineTo(COURT.threePointLineX, floorY + 40);
@@ -631,7 +626,6 @@
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // Paint / Key Area Fill
     ctx.fillStyle = 'rgba(180, 40, 40, 0.35)';
     ctx.fillRect(COURT.keyLineX, floorY, canvas.width - COURT.keyLineX, canvas.height - floorY);
 
@@ -641,26 +635,22 @@
   }
 
   function drawHoopAndBackboard() {
-    // 1. Hoop Support Pole & Base
     ctx.fillStyle = '#222738';
     ctx.fillRect(COURT.backboardX + 10, COURT.backboardY1 - 20, 25, COURT.floorY - (COURT.backboardY1 - 20));
     
     ctx.fillStyle = '#ff6b00';
     ctx.fillRect(COURT.backboardX + 5, COURT.backboardY1 + 50, 15, 8);
 
-    // 2. Backboard (Glass with border)
     ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
     ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = 4;
     ctx.fillRect(COURT.backboardX, COURT.backboardY1, 10, COURT.backboardY2 - COURT.backboardY1);
     ctx.strokeRect(COURT.backboardX, COURT.backboardY1, 10, COURT.backboardY2 - COURT.backboardY1);
 
-    // Target Box on Backboard
     ctx.strokeStyle = '#ff3d00';
     ctx.lineWidth = 3;
     ctx.strokeRect(COURT.backboardX - 1, COURT.hoopY - 45, 2, 50);
 
-    // 3. Rim (Metallic red-orange ring)
     ctx.strokeStyle = '#ff3d00';
     ctx.lineWidth = 6;
     ctx.beginPath();
@@ -668,14 +658,12 @@
     ctx.lineTo(rimBack.x, rimBack.y);
     ctx.stroke();
 
-    // Front Rim Knocker Circle
     ctx.fillStyle = '#ff3d00';
     ctx.beginPath();
     ctx.arc(rimFront.x, rimFront.y, COURT.rimRadius + 2, 0, Math.PI * 2);
     ctx.arc(rimBack.x, rimBack.y, COURT.rimRadius + 2, 0, Math.PI * 2);
     ctx.fill();
 
-    // 4. Net (Woven Strings with Swish deformation)
     const netTopY = COURT.hoopY;
     const netBottomY = COURT.hoopY + 45;
     const swishOffset = state.netSwishTimer > 0 ? Math.sin(state.netSwishTimer * 0.4) * 12 : 0;
@@ -695,7 +683,6 @@
       ctx.stroke();
     }
 
-    // Horizontal Net Rings
     for (let j = 1; j <= 3; j++) {
       const ringY = netTopY + (j / 3) * 45;
       const ringWidth = COURT.rimWidth - j * 5;
@@ -711,7 +698,6 @@
   function drawShooterSpotMarker() {
     const spot = SPOTS[state.currentSpotKey];
 
-    // Pulsing circle spot indicator on court floor
     ctx.save();
     ctx.fillStyle = state.currentSpotKey === '3pt' ? 'rgba(255, 107, 0, 0.25)' : 'rgba(0, 229, 255, 0.25)';
     ctx.strokeStyle = state.currentSpotKey === '3pt' ? 'var(--accent-orange)' : 'var(--accent-cyan)';
@@ -722,13 +708,10 @@
     ctx.fill();
     ctx.stroke();
 
-    // Shooter Silhouette / Ball Rack
     if (!ball.inAir) {
-      // Shooter Stick/Avatar Silhouette
       ctx.fillStyle = '#222a42';
       ctx.fillRect(spot.x - 12, COURT.floorY - 60, 24, 60);
 
-      // Player Head
       ctx.beginPath();
       ctx.arc(spot.x, COURT.floorY - 75, 14, 0, Math.PI * 2);
       ctx.fill();
@@ -740,7 +723,7 @@
     if (ball.inAir) return;
 
     const spot = SPOTS[state.currentSpotKey];
-    const previewPower = state.isCharging ? state.power : 50; // default preview at 50%
+    const previewPower = state.isCharging ? state.power : 50;
     const powerRatio = previewPower / 100;
 
     const minVel = spotKeyVelocityMin(state.currentSpotKey);
@@ -798,13 +781,11 @@
     ctx.translate(ball.x, ball.y);
     ctx.rotate(ball.rotation);
 
-    // Ball Base Shadow / Glow
     if (ball.scored) {
       ctx.shadowColor = '#00e676';
       ctx.shadowBlur = 20;
     }
 
-    // Ball Sphere Gradient
     const ballGrad = ctx.createRadialGradient(
       -ball.radius * 0.3,
       -ball.radius * 0.3,
@@ -822,11 +803,9 @@
     ctx.arc(0, 0, ball.radius, 0, Math.PI * 2);
     ctx.fill();
 
-    // Black Seams on Basketball
     ctx.strokeStyle = '#1a0d00';
     ctx.lineWidth = 1.8;
 
-    // Cross Seam
     ctx.beginPath();
     ctx.moveTo(-ball.radius, 0);
     ctx.lineTo(ball.radius, 0);
@@ -834,7 +813,6 @@
     ctx.lineTo(0, ball.radius);
     ctx.stroke();
 
-    // Curved Rib Seams
     ctx.beginPath();
     ctx.arc(-ball.radius * 0.5, 0, ball.radius * 0.7, -Math.PI * 0.4, Math.PI * 0.4);
     ctx.stroke();
@@ -862,7 +840,6 @@
     if (ball.inAir) return;
     const spot = SPOTS[state.currentSpotKey];
 
-    // Draw Angle Pointer Line at shooter spot
     const rad = (state.angle * Math.PI) / 180;
     const lineLen = 45;
     const endX = spot.x + lineLen * Math.cos(rad);
@@ -876,7 +853,6 @@
     ctx.lineTo(endX, endY);
     ctx.stroke();
 
-    // Angle text floating near shooter
     ctx.fillStyle = '#ffffff';
     ctx.font = '700 13px Orbitron, sans-serif';
     ctx.fillText(`${state.angle}°`, spot.x - 15, COURT.floorY - 85);
@@ -890,7 +866,7 @@
     requestAnimationFrame(gameLoop);
   }
 
-  // --- Event Listeners & Keyboard Bindings ---
+  // --- Event Listeners & Keyboard / Touch Bindings ---
   function setupEvents() {
     // Keyboard keydown
     window.addEventListener('keydown', (e) => {
@@ -936,7 +912,32 @@
       }
     });
 
-    // On-screen Button Listeners
+    // Canvas Direct Touch Gestures
+    canvas.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      if (e.touches.length > 0) {
+        state.touchStartY = e.touches[0].clientY;
+        startCharging();
+      }
+    }, { passive: false });
+
+    canvas.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      if (e.touches.length > 0 && !ball.inAir) {
+        const deltaY = state.touchStartY - e.touches[0].clientY;
+        if (Math.abs(deltaY) > 12) {
+          setAngle(deltaY > 0 ? 1 : -1);
+          state.touchStartY = e.touches[0].clientY;
+        }
+      }
+    }, { passive: false });
+
+    canvas.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      releaseShot();
+    }, { passive: false });
+
+    // On-screen Touch Button Listeners
     if (btnToggleSpot) {
       btnToggleSpot.addEventListener('click', toggleSpot);
     }
@@ -950,16 +951,22 @@
     }
 
     if (btnShoot) {
-      btnShoot.addEventListener('mousedown', startCharging);
-      btnShoot.addEventListener('mouseup', releaseShot);
-      btnShoot.addEventListener('touchstart', (e) => {
+      btnShoot.addEventListener('mousedown', (e) => {
         e.preventDefault();
         startCharging();
       });
-      btnShoot.addEventListener('touchend', (e) => {
+      btnShoot.addEventListener('mouseup', (e) => {
         e.preventDefault();
         releaseShot();
       });
+      btnShoot.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        startCharging();
+      }, { passive: false });
+      btnShoot.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        releaseShot();
+      }, { passive: false });
     }
 
     // Sound toggle
@@ -969,6 +976,7 @@
         soundIcon.textContent = soundEnabled ? '🔊' : '🔇';
         soundToggleBtn.classList.toggle('off', !soundEnabled);
         soundToggleBtn.innerHTML = soundEnabled ? '<span id="sound-icon">🔊</span> Sound ON' : '<span id="sound-icon">🔇</span> Sound OFF';
+        triggerHaptic(15);
       });
     }
   }

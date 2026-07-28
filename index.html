@@ -2,9 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Basketbola - 2PT & 3PT Basketball Arcade</title>
-  <meta name="description" content="A fast-paced web basketball arcade game. Shoot 2-pointers and 3-pointers using keyboard controls!">
+  <meta name="description" content="A fast-paced web basketball arcade game. Shoot 2-pointers and 3-pointers using keyboard or mobile touch controls!">
   
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -72,10 +72,31 @@
         </div>
       </div>
 
-      <!-- Controls & Guide Sidebar/Footer -->
+      <!-- Mobile & Touch Arcade Controller -->
+      <section class="touch-controller-deck">
+        <div class="touch-row top-row">
+          <button class="action-btn spot-btn" id="btn-toggle-spot">
+            📍 <span id="spot-btn-label">Switch to 2PT</span>
+          </button>
+          
+          <div class="angle-control-group">
+            <button class="action-btn angle-btn" id="btn-angle-down" aria-label="Decrease Angle">📐 −</button>
+            <span class="angle-readout" id="angle-display">52°</span>
+            <button class="action-btn angle-btn" id="btn-angle-up" aria-label="Increase Angle">📐 +</button>
+          </div>
+        </div>
+
+        <div class="touch-row shoot-row">
+          <button class="action-btn shoot-btn" id="btn-shoot">
+            <span>HOLD TO SHOOT</span> 🏀
+          </button>
+        </div>
+      </section>
+
+      <!-- Desktop Keyboard Controls Guide -->
       <section class="controls-panel">
         <div class="panel-header">
-          <h2>KEYBOARD CONTROLS</h2>
+          <h2>CONTROLS & SETTINGS</h2>
           <button id="sound-toggle-btn" class="sound-btn" title="Toggle Sound Effects">
             <span id="sound-icon">🔊</span> Sound ON
           </button>
@@ -83,10 +104,10 @@
 
         <div class="keys-grid">
           <div class="key-card">
-            <div class="key-cap space">SPACEBAR</div>
+            <div class="key-cap space">SPACE</div>
             <div class="key-desc">
               <strong>Shoot Ball</strong>
-              <span>Hold to charge power, release to shoot</span>
+              <span>Hold to charge, release to shoot</span>
             </div>
           </div>
 
@@ -99,7 +120,7 @@
             </div>
             <div class="key-desc">
               <strong>Switch Position</strong>
-              <span>Toggle 2-Pointer / 3-Pointer spot</span>
+              <span>Toggle 2PT / 3PT spot</span>
             </div>
           </div>
 
@@ -110,7 +131,7 @@
             </div>
             <div class="key-desc">
               <strong>Adjust Angle</strong>
-              <span>Fine tune launch trajectory angle</span>
+              <span>Fine tune shot trajectory</span>
             </div>
           </div>
 
@@ -118,25 +139,16 @@
             <div class="key-cap">R</div>
             <div class="key-desc">
               <strong>Reset / Retry</strong>
-              <span>Reset ball position or clear current shot</span>
+              <span>Reset ball position</span>
             </div>
           </div>
-        </div>
-
-        <!-- On-Screen Interactive Buttons (Touch & Mouse friendly) -->
-        <div class="screen-controls">
-          <button class="action-btn" id="btn-toggle-spot">Switch to <span id="next-spot-name">2PT</span></button>
-          <button class="action-btn angle-btn" id="btn-angle-down">Angle -</button>
-          <span class="angle-readout" id="angle-display">52°</span>
-          <button class="action-btn angle-btn" id="btn-angle-up">Angle +</button>
-          <button class="action-btn shoot-btn" id="btn-shoot">HOLD TO SHOOT 🏀</button>
         </div>
       </section>
     </main>
 
     <!-- Footer -->
     <footer class="game-footer">
-      <p>Basketbola Web Arcade &bull; Master your timing from 2PT and 3PT spots!</p>
+      <p>Basketbola Mobile Web Arcade &bull; Touch & Keyboard Compatible</p>
     </footer>
   </div>
 
