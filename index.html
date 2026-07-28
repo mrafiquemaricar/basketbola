@@ -11,6 +11,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
   
+  <!-- PeerJS WebRTC Library for Cross-Device Real-Time 1v1 Signaling -->
+  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -241,7 +244,7 @@
           <select id="player-country" aria-label="Country">
             <option value="🇸🇬">🇸🇬 Singapore</option>
             <option value="🇲🇾">🇲🇾 Malaysia</option>
-            <option value="🇮<ctrl42>">🇮🇩 Indonesia</option>
+            <option value="🇮🇩">🇮🇩 Indonesia</option>
             <option value="🇵🇭">🇵🇭 Philippines</option>
             <option value="🇹🇭">🇹🇭 Thailand</option>
             <option value="🇯🇵">🇯🇵 Japan</option>
@@ -266,7 +269,7 @@
     <div class="modal-card mp-modal-card">
       <div class="modal-header">
         <h2>1v1 MULTIPLAYER BATTLE ⚔️</h2>
-        <p>Play live head-to-head against another baller!</p>
+        <p>Play live real-time head-to-head against a friend!</p>
       </div>
 
       <div class="mp-options">
@@ -281,14 +284,28 @@
 
         <div class="mp-divider"><span>OR PLAY WITH A FRIEND</span></div>
 
-        <!-- Room Code Create / Join -->
-        <div class="room-code-group">
-          <input type="text" id="room-code-input" placeholder="Enter 4-Digit Code" maxlength="4" autocomplete="off">
-          <button class="action-btn" id="btn-join-room" type="button">JOIN ROOM</button>
-        </div>
+        <!-- Create Private Room Button -->
         <button class="action-btn create-room-btn" id="btn-create-room" type="button">
           🔑 CREATE PRIVATE ROOM
         </button>
+
+        <!-- Room Code Display Box (When Room Created) -->
+        <div class="room-created-box" id="room-created-box" style="display: none;">
+          <div class="rc-label">SHARE ROOM CODE WITH FRIEND:</div>
+          <div class="rc-code-display" id="created-code-display">8492</div>
+          <button class="copy-link-btn" id="btn-copy-room-link" type="button">
+            📋 COPY INVITE LINK
+          </button>
+          <div class="rc-status-pulse">
+            <span class="spinner-small"></span> Waiting for friend to join...
+          </div>
+        </div>
+
+        <!-- Join Room Input Group -->
+        <div class="room-code-group" id="room-join-group">
+          <input type="text" id="room-code-input" placeholder="Enter 4-Digit Code" maxlength="4" autocomplete="off">
+          <button class="action-btn" id="btn-join-room" type="button">JOIN ROOM</button>
+        </div>
       </div>
 
       <!-- Searching Status Indicator -->

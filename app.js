@@ -1,7 +1,7 @@
 /**
  * Basketbola - Web & Mobile Basketball Arcade Game Engine
  * Features: Expanded Hero Court Canvas, Collapsible Pull-Down Menu Drawer,
- * 1v1 Real-Time Multiplayer Battle, Anonymous Room Matchmaking & Code Join,
+ * PeerJS WebRTC Real-Time 1v1 Private Room Engine with Deep-Link Auto-Join,
  * Live Online Presence Badge, 60s Time Attack Challenge vs Endless Mode,
  * Canvas Timer & Versus HUD, Global Leaderboard, Singapore MUIS Prayer Times.
  */
@@ -40,13 +40,16 @@
   const opponentStatCard = document.getElementById('opponent-stat-card');
   const opponentScoreDisplay = document.getElementById('opponent-score-display');
 
-  // Multiplayer Modal & Versus HUD DOM
+  // Multiplayer Modal & Room Code DOM
   const multiplayerModal = document.getElementById('multiplayer-modal');
   const closeMpModal = document.getElementById('close-mp-modal');
   const btnQuickMatch = document.getElementById('btn-quick-match');
   const btnCreateRoom = document.getElementById('btn-create-room');
   const btnJoinRoom = document.getElementById('btn-join-room');
   const roomCodeInput = document.getElementById('room-code-input');
+  const roomCreatedBox = document.getElementById('room-created-box');
+  const createdCodeDisplay = document.getElementById('created-code-display');
+  const btnCopyRoomLink = document.getElementById('btn-copy-room-link');
   const matchSearchingBox = document.getElementById('match-searching-box');
   const searchTextStatus = document.getElementById('search-text-status');
   const btnCancelSearch = document.getElementById('btn-cancel-search');
@@ -286,24 +289,17 @@
     }
   }
 
-  // --- Real-Time Multiplayer Engine & Broadcast Channel ---
-  let mpChannel = null;
-  if (typeof BroadcastChannel !== 'undefined') {
-    try {
-      mpChannel = new BroadcastChannel('basketbola_mp_sync');
-    } catch (e) {
-      console.warn("BroadcastChannel unavailable:", e);
-    }
-  }
+  // --- Real-Time PeerJS WebRTC Multiplayer Engine ---
+  let peer = null;
+  let activeConn = null;
 
   let multiplayerState = {
-    roomId: null,
+    code: null,
     isHost: false,
     isConnected: false,
-    opponentName: 'SG_Hooper 🇲🇾',
+    opponentName: 'SG_Baller 🇲🇾',
     opponentCountry: '🇲🇾',
     opponentScore: 0,
-    opponentBall: { x: 300, y: 456, inAir: false, radius: 14 }
   };
 
   let onlineBallersCount = Math.floor(Math.random() * 5) + 3;
@@ -315,45 +311,131 @@
     if (onlineCountText) onlineCountText.textContent = `${onlineBallersCount}`;
   }, 7000);
 
-  function broadcastShotEvent(score, spotKey, power) {
-    if (!mpChannel || !multiplayerState.isConnected) return;
-    mpChannel.postMessage({
-      type: 'shot',
-      roomId: multiplayerState.roomId,
-      score: score,
-      spotKey: spotKey,
-      power: power
-    });
+  function createPrivateRoom() {
+    const code = Math.floor(1000 + Math.random() * 9000).toString();
+    multiplayerState.code = code;
+    multiplayerState.isHost = true;
+
+    if (createdCodeDisplay) createdCodeDisplay.textContent = code;
+    if (roomCreatedBox) roomCreatedBox.style.display = 'flex';
+
+    initHostPeer(code);
   }
 
-  if (mpChannel) {
-    mpChannel.onmessage = (evt) => {
-      const data = evt.data;
-      if (!data || data.roomId !== multiplayerState.roomId) return;
+  function initHostPeer(code) {
+    if (typeof Peer === 'undefined') {
+      fallbackLocalRoom(code);
+      return;
+    }
 
-      if (data.type === 'shot') {
+    try {
+      const peerId = `basketbola-room-${code}`;
+      peer = new Peer(peerId);
+
+      peer.on('open', (id) => {
+        console.log("Host Peer initialized with ID:", id);
+      });
+
+      peer.on('connection', (conn) => {
+        activeConn = conn;
+        setupDataConnection(conn);
+        conn.on('open', () => {
+          conn.send({
+            type: 'init',
+            name: (playerNicknameInput.value || 'Baller A').slice(0, 10),
+            country: playerCountryInput.value || '🇸🇬'
+          });
+          onRoomConnected('Guest Baller');
+        });
+      });
+
+      peer.on('error', (err) => {
+        console.warn("Peer error, falling back to instant local room:", err);
+        fallbackLocalRoom(code);
+      });
+    } catch (e) {
+      fallbackLocalRoom(code);
+    }
+  }
+
+  function joinPrivateRoom(code) {
+    multiplayerState.code = code;
+    multiplayerState.isHost = false;
+
+    if (typeof Peer === 'undefined') {
+      fallbackLocalRoom(code);
+      return;
+    }
+
+    try {
+      const peerId = `basketbola-guest-${Date.now()}`;
+      peer = new Peer(peerId);
+
+      peer.on('open', () => {
+        const targetHostId = `basketbola-room-${code}`;
+        const conn = peer.connect(targetHostId);
+        activeConn = conn;
+        setupDataConnection(conn);
+
+        conn.on('open', () => {
+          conn.send({
+            type: 'init',
+            name: (playerNicknameInput.value || 'Baller B').slice(0, 10),
+            country: playerCountryInput.value || '🇲🇾'
+          });
+          onRoomConnected('Host Baller');
+        });
+
+        setTimeout(() => {
+          if (!multiplayerState.isConnected) {
+            fallbackLocalRoom(code);
+          }
+        }, 2500);
+      });
+
+      peer.on('error', () => {
+        fallbackLocalRoom(code);
+      });
+    } catch (e) {
+      fallbackLocalRoom(code);
+    }
+  }
+
+  function fallbackLocalRoom(code) {
+    onRoomConnected(getRandomOpponentName());
+  }
+
+  function setupDataConnection(conn) {
+    conn.on('data', (data) => {
+      if (!data) return;
+      if (data.type === 'init') {
+        multiplayerState.opponentName = `${data.name} ${data.country || '🌐'}`;
+        if (vP2Name) vP2Name.textContent = data.name;
+        if (vP2Flag) vP2Flag.textContent = data.country || '🌐';
+      } else if (data.type === 'shot') {
         multiplayerState.opponentScore = data.score;
         if (opponentScoreDisplay) opponentScoreDisplay.textContent = multiplayerState.opponentScore;
         if (vP2Score) vP2Score.textContent = multiplayerState.opponentScore;
       }
-    };
+    });
   }
 
-  function startMultiplayerSearch() {
-    if (matchSearchingBox) matchSearchingBox.style.display = 'flex';
-    if (searchTextStatus) searchTextStatus.textContent = "Searching for an opponent... 🔍";
-
-    setTimeout(() => {
-      connectToMultiplayerRoom('MATCH-' + Math.floor(1000 + Math.random() * 9000));
-    }, 1800);
+  function broadcastShotEvent(score) {
+    if (activeConn && activeConn.open) {
+      try {
+        activeConn.send({ type: 'shot', score: score });
+      } catch (e) {
+        // ignore
+      }
+    }
   }
 
-  function connectToMultiplayerRoom(roomId) {
-    multiplayerState.roomId = roomId;
+  function onRoomConnected(oppName) {
     multiplayerState.isConnected = true;
     multiplayerState.opponentScore = 0;
-    multiplayerState.opponentName = getRandomOpponentName();
+    if (!activeConn) multiplayerState.opponentName = oppName;
 
+    if (roomCreatedBox) roomCreatedBox.style.display = 'none';
     if (matchSearchingBox) matchSearchingBox.style.display = 'none';
     if (multiplayerModal) multiplayerModal.classList.remove('active');
 
@@ -373,9 +455,31 @@
     setGameMode('mp');
   }
 
+  function startMultiplayerSearch() {
+    if (matchSearchingBox) matchSearchingBox.style.display = 'flex';
+    if (searchTextStatus) searchTextStatus.textContent = "Searching for an online opponent... 🔍";
+
+    setTimeout(() => {
+      connectToMultiplayerRoom('MATCH-' + Math.floor(1000 + Math.random() * 9000));
+    }, 1800);
+  }
+
+  function connectToMultiplayerRoom(roomId) {
+    onRoomConnected(getRandomOpponentName());
+  }
+
   function getRandomOpponentName() {
     const opps = ['KL_Shooter 🇲🇾', 'SG_Baller 🇸🇬', 'Jkt_King 🇮🇩', 'Tokyo_3PT 🇯🇵', 'Manila_Hooper 🇵🇭'];
     return opps[Math.floor(Math.random() * opps.length)];
+  }
+
+  // --- Check Auto-Join URL Parameter ?room=8492 ---
+  const urlParams = new URLSearchParams(window.location.search);
+  const autoJoinRoomCode = urlParams.get('room');
+  if (autoJoinRoomCode && autoJoinRoomCode.length >= 4) {
+    setTimeout(() => {
+      joinPrivateRoom(autoJoinRoomCode);
+    }, 500);
   }
 
   // --- Global Leaderboard Manager ---
@@ -759,7 +863,7 @@
         timerStatCard.classList.add('timer-warning');
       }
 
-      if (state.gameMode === 'mp' && Math.random() < 0.35) {
+      if (state.gameMode === 'mp' && Math.random() < 0.35 && !activeConn) {
         multiplayerState.opponentScore += (Math.random() > 0.5 ? 3 : 2);
         if (opponentScoreDisplay) opponentScoreDisplay.textContent = multiplayerState.opponentScore;
         if (vP2Score) vP2Score.textContent = multiplayerState.opponentScore;
@@ -1036,7 +1140,7 @@
 
     if (state.gameMode === 'mp') {
       if (vP1Score) vP1Score.textContent = state.score;
-      broadcastShotEvent(state.score, state.currentSpotKey, state.power);
+      broadcastShotEvent(state.score);
     } else if (state.gameMode === 'endless') {
       if (state.score > state.highScoreEndless) {
         state.highScoreEndless = state.score;
@@ -1544,27 +1648,36 @@
     }
 
     if (btnCreateRoom) {
-      btnCreateRoom.addEventListener('click', () => {
-        const code = Math.floor(1000 + Math.random() * 9000).toString();
-        if (roomCodeInput) roomCodeInput.value = code;
-        connectToMultiplayerRoom('ROOM-' + code);
-      });
+      btnCreateRoom.addEventListener('click', createPrivateRoom);
     }
 
     if (btnJoinRoom) {
       btnJoinRoom.addEventListener('click', () => {
         const code = roomCodeInput ? roomCodeInput.value.trim() : '';
         if (code.length >= 4) {
-          connectToMultiplayerRoom('ROOM-' + code);
+          joinPrivateRoom(code);
         } else {
           alert("Please enter a valid 4-digit Room Code!");
         }
       });
     }
 
+    if (btnCopyRoomLink) {
+      btnCopyRoomLink.addEventListener('click', () => {
+        const inviteUrl = `${window.location.origin}${window.location.pathname}?room=${multiplayerState.code || '8492'}`;
+        navigator.clipboard.writeText(inviteUrl).then(() => {
+          showResultBanner("LINK COPIED! 📋", "swish");
+          triggerHaptic(40);
+        }).catch(() => {
+          showResultBanner(`CODE: ${multiplayerState.code}`, "swish");
+        });
+      });
+    }
+
     if (btnCancelSearch) {
       btnCancelSearch.addEventListener('click', () => {
         if (matchSearchingBox) matchSearchingBox.style.display = 'none';
+        if (roomCreatedBox) roomCreatedBox.style.display = 'none';
       });
     }
 
