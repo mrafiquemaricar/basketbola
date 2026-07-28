@@ -1,7 +1,7 @@
 /* Base reset & Variables */
 :root {
   --bg-dark: #0b0d17;
-  --bg-card: rgba(22, 27, 46, 0.75);
+  --bg-card: rgba(22, 27, 46, 0.85);
   --border-color: rgba(255, 255, 255, 0.12);
   --accent-orange: #ff6b00;
   --accent-orange-glow: rgba(255, 107, 0, 0.4);
@@ -44,7 +44,7 @@ body {
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  padding: 8px;
+  padding: 6px;
 }
 
 .app-container {
@@ -52,59 +52,93 @@ body {
   max-width: 1100px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
-/* Collapsible Compact Prayer & Online Top Bar */
-.prayer-top-bar {
-  background: rgba(16, 21, 38, 0.88);
-  backdrop-filter: blur(12px);
+/* Ultra-Compact Pull-Down Header Container */
+.app-header-container {
+  background: var(--bg-card);
+  backdrop-filter: blur(14px);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
-  padding: 4px 10px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-  transition: all 0.2s ease;
+  padding: 6px 12px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-.prayer-compact-bar {
+.app-micro-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  font-size: 0.78rem;
-  font-weight: 700;
-  cursor: pointer;
-  padding: 4px 0;
+  width: 100%;
 }
 
-.p-compact-item {
+.micro-left {
   display: flex;
   align-items: center;
-  gap: 4px;
-  white-space: nowrap;
+  gap: 10px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  flex-wrap: wrap;
 }
 
-.p-compact-item.countdown strong {
+.micro-logo {
+  font-family: var(--font-arcade);
+  font-size: 0.95rem;
+  color: #fff;
+  letter-spacing: 1px;
+}
+
+.micro-stat {
+  background: rgba(10, 13, 24, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 2px 8px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.micro-stat strong {
+  font-family: var(--font-arcade);
+  color: #fff;
+}
+
+.micro-stat.score strong {
   color: var(--accent-orange);
 }
 
-.p-compact-item.countdown span {
-  font-family: var(--font-arcade);
-  color: var(--accent-gold);
-}
-
-.p-compact-item.online {
-  color: var(--accent-green);
-}
-
-.p-compact-toggle {
-  font-size: 0.72rem;
+.micro-stat.timer strong {
   color: var(--accent-cyan);
-  background: rgba(0, 229, 255, 0.1);
-  border: 1px solid rgba(0, 229, 255, 0.25);
+}
+
+.micro-stat.opp strong {
+  color: var(--accent-purple);
+}
+
+.micro-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.micro-pill {
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.micro-pill.presence {
+  background: rgba(0, 230, 118, 0.12);
+  border: 1px solid rgba(0, 230, 118, 0.3);
+  color: var(--accent-green);
   padding: 2px 8px;
   border-radius: 12px;
-  white-space: nowrap;
 }
 
 .pulse-dot {
@@ -117,71 +151,44 @@ body {
   100% { opacity: 1; transform: scale(1.2); }
 }
 
-/* Full 6-Prayer Drawer */
-.prayer-times-drawer {
-  padding-top: 8px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  margin-top: 4px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.prayer-times-grid {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 6px;
-}
-
-.prayer-chip {
-  background: rgba(10, 13, 24, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: var(--radius-sm);
-  padding: 4px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.prayer-chip .p-name {
-  font-size: 0.6rem;
-  font-weight: 700;
-  color: var(--text-muted);
-  text-transform: uppercase;
-}
-
-.prayer-chip .p-time {
+.pull-menu-btn {
+  background: rgba(255, 107, 0, 0.15);
+  border: 1px solid var(--accent-orange);
+  color: var(--accent-orange);
   font-family: var(--font-arcade);
   font-size: 0.75rem;
-  font-weight: 700;
-  color: var(--text-main);
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s ease;
 }
 
-.prayer-chip.next-prayer {
-  background: rgba(0, 229, 255, 0.15);
-  border-color: var(--accent-cyan);
+.pull-menu-btn:hover, .pull-menu-btn:active {
+  background: var(--accent-orange);
+  color: #fff;
+  box-shadow: 0 0 12px var(--accent-orange-glow);
 }
 
-.location-tag {
-  font-size: 0.7rem;
-  color: var(--text-muted);
-  text-align: right;
-}
-
-/* Streamlined Scoreboard Header */
-.scoreboard {
-  background: var(--bg-card);
-  backdrop-filter: blur(12px);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  padding: 8px 12px;
+/* Collapsible Expanded Drawer */
+.app-expanded-drawer {
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  gap: 10px;
+  animation: slide-down 0.25s ease-out;
 }
 
-.brand-mode-row {
+@keyframes slide-down {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.drawer-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -189,28 +196,6 @@ body {
   flex-wrap: wrap;
 }
 
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.brand .icon {
-  font-size: 1.4rem;
-  filter: drop-shadow(0 0 8px var(--accent-orange-glow));
-}
-
-.brand h1 {
-  font-family: var(--font-arcade);
-  font-size: 1.15rem;
-  font-weight: 900;
-  letter-spacing: 1.5px;
-  background: linear-gradient(135deg, #fff 0%, var(--accent-orange) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-/* Mode Selector Pills */
 .mode-selector {
   display: flex;
   background: rgba(10, 13, 24, 0.7);
@@ -230,10 +215,10 @@ body {
   padding: 4px 10px;
   border-radius: 16px;
   cursor: pointer;
-  transition: all 0.2s ease;
   display: flex;
   align-items: center;
   gap: 4px;
+  transition: all 0.2s ease;
 }
 
 .mode-btn.active {
@@ -256,67 +241,98 @@ body {
   padding: 5px 10px;
   border-radius: 16px;
   cursor: pointer;
-  transition: all 0.2s ease;
-  white-space: nowrap;
 }
 
-/* Minimal Stats Grid */
-.stats-grid {
+.stats-row {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   justify-content: space-between;
 }
 
-.stat-card {
+.stat-pill {
   background: rgba(10, 13, 24, 0.6);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: var(--radius-sm);
-  padding: 4px 8px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  flex: 1;
-  min-width: 0;
-}
-
-.stat-card.score-card {
-  border-color: var(--accent-orange-glow);
-  background: rgba(255, 107, 0, 0.08);
-}
-
-.stat-card.opponent-card {
-  border-color: rgba(213, 0, 249, 0.4);
-  background: rgba(213, 0, 249, 0.1);
-}
-
-.stat-card .label {
-  font-size: 0.58rem;
-  font-weight: 700;
-  letter-spacing: 0.5px;
+  padding: 4px 10px;
+  font-size: 0.75rem;
   color: var(--text-muted);
+  flex: 1;
+  text-align: center;
 }
 
-.stat-card .value {
+.stat-pill strong {
   font-family: var(--font-arcade);
-  font-size: 1rem;
-  font-weight: 800;
   color: #fff;
 }
 
-.stat-card .timer-value {
-  color: var(--accent-cyan);
+.prayer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: rgba(10, 13, 24, 0.5);
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  flex-wrap: wrap;
 }
 
-.stat-card.score-card .value {
+.hijri-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--accent-gold);
+}
+
+.prayer-times-grid {
+  display: flex;
+  gap: 6px;
+}
+
+.prayer-chip {
+  background: rgba(20, 26, 46, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  padding: 2px 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.prayer-chip .p-name {
+  font-size: 0.55rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.prayer-chip .p-time {
+  font-family: var(--font-arcade);
+  font-size: 0.7rem;
+  color: #fff;
+}
+
+.prayer-chip.next-prayer {
+  border-color: var(--accent-cyan);
+}
+
+.countdown-badge {
+  font-size: 0.75rem;
+  color: var(--text-main);
+}
+
+.countdown-badge strong {
   color: var(--accent-orange);
 }
 
-/* Hero Canvas Area */
+.countdown-badge .cd-timer {
+  font-family: var(--font-arcade);
+  color: var(--accent-gold);
+}
+
+/* Expanded Hero Canvas Area */
 .game-wrapper {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
+  flex: 1;
 }
 
 .canvas-container {
@@ -326,7 +342,7 @@ body {
   border-radius: var(--radius-md);
   border: 1px solid var(--border-color);
   overflow: hidden;
-  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.7);
   aspect-ratio: 1000 / 560;
   touch-action: none;
 }
@@ -467,15 +483,15 @@ canvas {
   backdrop-filter: blur(12px);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
-  padding: 10px;
+  padding: 8px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .touch-row {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   width: 100%;
 }
 
@@ -483,7 +499,7 @@ canvas {
   background: #1a2035;
   border: 1px solid var(--border-color);
   color: var(--text-main);
-  padding: 8px 14px;
+  padding: 6px 12px;
   border-radius: var(--radius-sm);
   font-weight: 700;
   font-size: 0.85rem;
@@ -492,7 +508,7 @@ canvas {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  min-height: 42px;
+  min-height: 40px;
 }
 
 .action-btn:active {
@@ -515,9 +531,9 @@ canvas {
 }
 
 .angle-btn {
-  padding: 6px 12px;
-  min-width: 40px;
-  min-height: 38px;
+  padding: 4px 10px;
+  min-width: 38px;
+  min-height: 36px;
 }
 
 .angle-readout {
@@ -531,9 +547,9 @@ canvas {
 
 .action-btn.shoot-btn {
   width: 100%;
-  min-height: 48px;
+  min-height: 46px;
   font-family: var(--font-arcade);
-  font-size: 1.05rem;
+  font-size: 1rem;
   font-weight: 900;
   letter-spacing: 1px;
   background: linear-gradient(135deg, var(--accent-orange) 0%, #d84315 100%);
@@ -548,11 +564,11 @@ canvas {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
-  padding: 8px 12px;
+  padding: 6px 10px;
 }
 
 .controls-details summary {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: 700;
   color: var(--text-muted);
   cursor: pointer;
@@ -577,41 +593,41 @@ canvas {
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid var(--border-color);
   color: var(--text-main);
-  padding: 4px 10px;
-  border-radius: 14px;
-  font-size: 0.75rem;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 0.7rem;
   cursor: pointer;
 }
 
 .keys-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 8px;
-  margin-top: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 6px;
+  margin-top: 8px;
 }
 
 .key-card {
   background: rgba(10, 13, 24, 0.5);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: var(--radius-sm);
-  padding: 8px 10px;
+  padding: 6px 8px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .key-cap {
   background: #1e2438;
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: var(--radius-sm);
-  padding: 4px 8px;
+  padding: 3px 6px;
   font-family: var(--font-arcade);
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: var(--accent-cyan);
 }
 
-.key-desc strong { font-size: 0.8rem; }
-.key-desc span { font-size: 0.65rem; color: var(--text-muted); }
+.key-desc strong { font-size: 0.75rem; }
+.key-desc span { font-size: 0.6rem; color: var(--text-muted); }
 
 /* Fullscreen Fixed Modals */
 .modal-overlay {
@@ -694,31 +710,30 @@ canvas {
 
 /* Footer */
 .game-footer {
-  text-align: center; font-size: 0.75rem; color: var(--text-muted);
-  padding: 4px 0 10px 0; display: flex; flex-direction: column; gap: 2px; align-items: center;
+  text-align: center; font-size: 0.72rem; color: var(--text-muted);
+  padding: 2px 0 8px 0; display: flex; flex-direction: column; gap: 2px; align-items: center;
 }
 
 .dev-attribution a { color: var(--accent-cyan); text-decoration: none; font-weight: 800; }
 
-/* Responsive Mobile Rules */
+/* Responsive Mobile Rules for Expanded Court */
 @media (max-width: 600px) {
-  body { padding: 4px; }
-  .brand-mode-row { gap: 6px; }
-  .brand h1 { font-size: 1rem; }
+  body { padding: 2px; }
+  .app-container { gap: 4px; }
+  .app-header-container { padding: 4px 8px; }
+  .micro-logo { font-size: 0.85rem; }
+  .micro-stat { font-size: 0.7rem; padding: 2px 6px; }
+  .pull-menu-btn { font-size: 0.7rem; padding: 3px 8px; }
   .mode-btn { padding: 4px 8px; font-size: 0.7rem; }
-  .leaderboard-header-btn { font-size: 0.65rem; padding: 4px 8px; }
-  .stats-grid { gap: 4px; }
-  .stat-card { padding: 3px 4px; }
-  .stat-card .value { font-size: 0.9rem; }
-  .touch-row.top-row { flex-direction: row; }
-  .action-btn { min-height: 40px; padding: 6px 10px; font-size: 0.8rem; }
-  .action-btn.shoot-btn { min-height: 46px; font-size: 0.95rem; }
+  .prayer-times-grid { grid-template-columns: repeat(3, 1fr); gap: 4px; }
+  .canvas-container { border-radius: var(--radius-sm); }
+  .action-btn { min-height: 38px; padding: 4px 8px; font-size: 0.8rem; }
+  .action-btn.shoot-btn { min-height: 44px; font-size: 0.95rem; }
 }
 
 @media (max-height: 500px) and (orientation: landscape) {
   body { padding: 2px; }
-  .app-container { gap: 4px; }
-  .prayer-top-bar { padding: 2px 8px; }
-  .scoreboard { padding: 4px 8px; }
+  .app-container { gap: 2px; }
+  .app-header-container { padding: 2px 6px; }
   .controls-panel { display: none; }
 }

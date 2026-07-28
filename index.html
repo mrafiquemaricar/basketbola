@@ -16,120 +16,78 @@
 <body>
 
   <div class="app-container">
-    <!-- Top Bar: Collapsible Hijri, Singapore Prayer Times & Online Presence -->
-    <aside class="prayer-top-bar" id="prayer-top-bar">
-      <!-- Compact Single-Line Pill (Default View) -->
-      <div class="prayer-compact-bar" id="prayer-toggle-btn" title="Click to view full prayer times schedule">
-        <div class="p-compact-item hijri">
-          <span>🌙</span>
-          <span id="hijri-date-text">Loading Hijri...</span>
+    <!-- Top Pull-Down Header (Collapsible Drawer for Maximum Court Space) -->
+    <header class="app-header-container" id="app-header-container">
+      
+      <!-- Micro Top Bar (Default View on Load - Ultra Sleek & Space-Saving) -->
+      <div class="app-micro-bar" id="app-micro-bar">
+        <div class="micro-left">
+          <span class="micro-logo">🏀 <strong>BASKETBOLA</strong></span>
+          <span class="micro-stat score">PTS: <strong id="score-display">0</strong></span>
+          <span class="micro-stat timer" id="timer-stat-card">TIME: <strong id="timer-display" class="timer-value">60s</strong></span>
+          <span class="micro-stat opp" id="opponent-stat-card" style="display: none;">VS: <strong id="opponent-score-display" class="opp-val">0</strong></span>
         </div>
-        <div class="p-compact-item countdown">
-          <span class="next-lbl">Next:</span> <strong id="next-prayer-name">...</strong> <span id="next-prayer-timer">--:--:--</span>
+
+        <div class="micro-right">
+          <span class="micro-pill presence"><span class="pulse-dot">🟢</span> <span id="online-count-text">3</span></span>
+          <button class="pull-menu-btn" id="pull-menu-btn" type="button">
+            <span id="pull-btn-label">Menu</span> <span id="pull-btn-icon">▼</span>
+          </button>
         </div>
-        <div class="p-compact-item online">
-          <span class="pulse-dot">🟢</span>
-          <span id="online-count-text">3 Online</span>
-        </div>
-        <div class="p-compact-toggle" id="prayer-chevron">📅 Schedule ▾</div>
       </div>
 
-      <!-- Collapsible Full 6-Prayer Schedule Drawer -->
-      <div class="prayer-times-drawer" id="prayer-times-drawer" style="display: none;">
-        <div class="prayer-times-grid">
-          <div class="prayer-chip" id="chip-fajr">
-            <span class="p-name">Subuh</span>
-            <span class="p-time" id="time-fajr">--:--</span>
+      <!-- Collapsible Expanded Arcade Menu & Prayer Drawer (Tucked Away by Default) -->
+      <div class="app-expanded-drawer" id="app-expanded-drawer" style="display: none;">
+        <div class="drawer-row mode-row">
+          <div class="mode-selector">
+            <button class="mode-btn active" id="mode-timer-btn" type="button" title="60 seconds rapid fire challenge">
+              <span>⏱️</span> 60s Time Attack
+            </button>
+            <button class="mode-btn mode-mp-btn" id="mode-mp-btn" type="button" title="Live 1v1 Real-Time Battle">
+              <span>⚔️</span> 1v1 Battle
+            </button>
+            <button class="mode-btn" id="mode-endless-btn" type="button" title="Practice without timer">
+              <span>♾️</span> Endless
+            </button>
           </div>
-          <div class="prayer-chip" id="chip-sunrise">
-            <span class="p-name">Syuruk</span>
-            <span class="p-time" id="time-sunrise">--:--</span>
-          </div>
-          <div class="prayer-chip" id="chip-dhuhr">
-            <span class="p-name">Zohor</span>
-            <span class="p-time" id="time-dhuhr">--:--</span>
-          </div>
-          <div class="prayer-chip" id="chip-asr">
-            <span class="p-name">Asar</span>
-            <span class="p-time" id="time-asr">--:--</span>
-          </div>
-          <div class="prayer-chip" id="chip-maghrib">
-            <span class="p-name">Maghrib</span>
-            <span class="p-time" id="time-maghrib">--:--</span>
-          </div>
-          <div class="prayer-chip" id="chip-isha">
-            <span class="p-name">Isyak</span>
-            <span class="p-time" id="time-isha">--:--</span>
-          </div>
-        </div>
-        <div class="location-tag">🇸🇬 Singapore MUIS Method</div>
-      </div>
-    </aside>
 
-    <!-- Sleek Compact Header / Scoreboard -->
-    <header class="scoreboard">
-      <div class="brand-mode-row">
-        <div class="brand">
-          <span class="icon">🏀</span>
-          <h1>BASKETBOLA</h1>
-        </div>
-
-        <!-- Mode Selector Pills -->
-        <div class="mode-selector">
-          <button class="mode-btn active" id="mode-timer-btn" type="button" title="60 seconds rapid fire challenge">
-            <span>⏱️</span> 60s
-          </button>
-          <button class="mode-btn mode-mp-btn" id="mode-mp-btn" type="button" title="Live 1v1 Real-Time Battle">
-            <span>⚔️</span> 1v1
-          </button>
-          <button class="mode-btn" id="mode-endless-btn" type="button" title="Practice without timer">
-            <span>♾️</span> Endless
+          <button class="leaderboard-header-btn" id="open-leaderboard-btn" type="button">
+            🏆 LEADERBOARD
           </button>
         </div>
 
-        <button class="leaderboard-header-btn" id="open-leaderboard-btn" type="button">
-          🏆 LEADERBOARD
-        </button>
-      </div>
-
-      <!-- Minimal Score Stats Strip -->
-      <div class="stats-grid">
-        <div class="stat-card score-card">
-          <span class="label">SCORE</span>
-          <span class="value" id="score-display">0</span>
-        </div>
-        
-        <div class="stat-card timer-card" id="timer-stat-card">
-          <span class="label">TIME</span>
-          <span class="value timer-value" id="timer-display">60s</span>
+        <div class="drawer-row stats-row">
+          <div class="stat-pill"><span class="lbl">HIGH:</span> <strong id="high-score-display">0</strong></div>
+          <div class="stat-pill" id="streak-container"><span class="lbl">STREAK:</span> <strong id="streak-display">0 🔥</strong></div>
+          <div class="stat-pill"><span class="lbl">ACCURACY:</span> <strong id="accuracy-display">0%</strong></div>
         </div>
 
-        <!-- 1v1 Battle Opponent Score Card (Hidden in solo modes) -->
-        <div class="stat-card opponent-card" id="opponent-stat-card" style="display: none;">
-          <span class="label">OPPONENT</span>
-          <span class="value opp-val" id="opponent-score-display">0</span>
-        </div>
+        <!-- Prayer Times & Hijri Bar Inside Drawer -->
+        <div class="drawer-row prayer-row">
+          <div class="hijri-badge">
+            <span>🌙</span> <span id="hijri-date-text">Loading...</span>
+          </div>
 
-        <div class="stat-card" id="high-score-card">
-          <span class="label">HIGH</span>
-          <span class="value" id="high-score-display">0</span>
-        </div>
+          <div class="prayer-times-grid">
+            <div class="prayer-chip" id="chip-fajr"><span class="p-name">Subuh</span><span class="p-time" id="time-fajr">--:--</span></div>
+            <div class="prayer-chip" id="chip-sunrise"><span class="p-name">Syuruk</span><span class="p-time" id="time-sunrise">--:--</span></div>
+            <div class="prayer-chip" id="chip-dhuhr"><span class="p-name">Zohor</span><span class="p-time" id="time-dhuhr">--:--</span></div>
+            <div class="prayer-chip" id="chip-asr"><span class="p-name">Asar</span><span class="p-time" id="time-asr">--:--</span></div>
+            <div class="prayer-chip" id="chip-maghrib"><span class="p-name">Maghrib</span><span class="p-time" id="time-maghrib">--:--</span></div>
+            <div class="prayer-chip" id="chip-isha"><span class="p-name">Isyak</span><span class="p-time" id="time-isha">--:--</span></div>
+          </div>
 
-        <div class="stat-card streak-card" id="streak-container">
-          <span class="label">STREAK</span>
-          <span class="value" id="streak-display">0 🔥</span>
-        </div>
-
-        <div class="stat-card">
-          <span class="label">ACC</span>
-          <span class="value" id="accuracy-display">0%</span>
+          <div class="countdown-badge">
+            <span class="cd-label">Next: <strong id="next-prayer-name">...</strong></span>
+            <span class="cd-timer" id="next-prayer-timer">--:--:--</span>
+          </div>
         </div>
       </div>
     </header>
 
-    <!-- Main Game Area (Hero Court) -->
+    <!-- Main Game Area (Hero Court - Maximized Size) -->
     <main class="game-wrapper">
-      <!-- Canvas Container -->
+      <!-- Expanded Canvas Container -->
       <div class="canvas-container" id="canvas-container">
         <canvas id="gameCanvas" width="1000" height="560"></canvas>
         
@@ -181,7 +139,7 @@
         </div>
       </section>
 
-      <!-- Collapsible Settings & Keyboard Controls Drawer -->
+      <!-- Tucked-Away Controls Drawer -->
       <section class="controls-panel">
         <details class="controls-details">
           <summary class="panel-header-summary">
@@ -283,7 +241,7 @@
           <select id="player-country" aria-label="Country">
             <option value="🇸🇬">🇸🇬 Singapore</option>
             <option value="🇲🇾">🇲🇾 Malaysia</option>
-            <option value="🇮どもの">🇮🇩 Indonesia</option>
+            <option value="🇮<ctrl42>">🇮🇩 Indonesia</option>
             <option value="🇵🇭">🇵🇭 Philippines</option>
             <option value="🇹🇭">🇹🇭 Thailand</option>
             <option value="🇯🇵">🇯🇵 Japan</option>

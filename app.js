@@ -1,6 +1,7 @@
 /**
  * Basketbola - Web & Mobile Basketball Arcade Game Engine
- * Features: 1v1 Real-Time Multiplayer Battle, Anonymous Room Matchmaking & Code Join,
+ * Features: Expanded Hero Court Canvas, Collapsible Pull-Down Menu Drawer,
+ * 1v1 Real-Time Multiplayer Battle, Anonymous Room Matchmaking & Code Join,
  * Live Online Presence Badge, 60s Time Attack Challenge vs Endless Mode,
  * Canvas Timer & Versus HUD, Global Leaderboard, Singapore MUIS Prayer Times.
  */
@@ -306,12 +307,12 @@
   };
 
   let onlineBallersCount = Math.floor(Math.random() * 5) + 3;
-  if (onlineCountText) onlineCountText.textContent = `${onlineBallersCount} Online`;
+  if (onlineCountText) onlineCountText.textContent = `${onlineBallersCount}`;
 
   setInterval(() => {
     const delta = Math.floor(Math.random() * 3) - 1;
     onlineBallersCount = Math.max(2, Math.min(15, onlineBallersCount + delta));
-    if (onlineCountText) onlineCountText.textContent = `${onlineBallersCount} Online`;
+    if (onlineCountText) onlineCountText.textContent = `${onlineBallersCount}`;
   }, 7000);
 
   function broadcastShotEvent(score, spotKey, power) {
@@ -363,7 +364,7 @@
     if (vP1Score) vP1Score.textContent = '0';
 
     if (versusHudBadge) versusHudBadge.style.display = 'flex';
-    if (opponentStatCard) opponentStatCard.style.display = 'flex';
+    if (opponentStatCard) opponentStatCard.style.display = 'inline-block';
     if (opponentScoreDisplay) opponentScoreDisplay.textContent = '0';
 
     showResultBanner(`MATCH CONNECTED! ⚔️`, 'swish');
@@ -523,7 +524,7 @@
 
           const hijri = data.data.date.hijri;
           if (hijri) {
-            hijriDateText.textContent = `${hijri.day} ${hijri.month.en} ${hijri.year} AH`;
+            hijriDateText.textContent = `${hijri.day} ${hijri.month.en}`;
           }
           updatePrayerTimesDisplay();
         }
@@ -544,12 +545,11 @@
     try {
       const formatter = new Intl.DateTimeFormat('en-TN-u-ca-islamic', {
         day: 'numeric',
-        month: 'long',
-        year: 'numeric'
+        month: 'short'
       });
       hijriDateText.textContent = formatter.format(new Date());
     } catch (e) {
-      hijriDateText.textContent = "14 Safar 1448 AH";
+      hijriDateText.textContent = "14 Safar";
     }
   }
 
@@ -719,8 +719,8 @@
     if (modeTimerBtn) modeTimerBtn.classList.toggle('active', mode === 'timer');
     if (modeMpBtn) modeMpBtn.classList.toggle('active', mode === 'mp');
 
-    if (timerStatCard) timerStatCard.style.display = (mode === 'timer' || mode === 'mp') ? 'flex' : 'none';
-    if (opponentStatCard) opponentStatCard.style.display = (mode === 'mp') ? 'flex' : 'none';
+    if (timerStatCard) timerStatCard.style.display = (mode === 'timer' || mode === 'mp') ? 'inline-block' : 'none';
+    if (opponentStatCard) opponentStatCard.style.display = (mode === 'mp') ? 'inline-block' : 'none';
     if (versusHudBadge) versusHudBadge.style.display = (mode === 'mp') ? 'flex' : 'none';
 
     stopTimer();
@@ -1478,16 +1478,18 @@
 
   // --- Event Listeners & Keyboard / Touch Bindings ---
   function setupEvents() {
-    // Collapsible Prayer Bar Drawer Toggle
-    const prayerToggleBtn = document.getElementById('prayer-toggle-btn');
-    const prayerTimesDrawer = document.getElementById('prayer-times-drawer');
-    const prayerChevron = document.getElementById('prayer-chevron');
+    // Collapsible Pull-Down Menu Drawer Toggle
+    const pullMenuBtn = document.getElementById('pull-menu-btn');
+    const expandedDrawer = document.getElementById('app-expanded-drawer');
+    const pullBtnIcon = document.getElementById('pull-btn-icon');
+    const pullBtnLabel = document.getElementById('pull-btn-label');
 
-    if (prayerToggleBtn && prayerTimesDrawer) {
-      prayerToggleBtn.addEventListener('click', () => {
-        const isHidden = prayerTimesDrawer.style.display === 'none';
-        prayerTimesDrawer.style.display = isHidden ? 'flex' : 'none';
-        if (prayerChevron) prayerChevron.textContent = isHidden ? '📅 Schedule ▴' : '📅 Schedule ▾';
+    if (pullMenuBtn && expandedDrawer) {
+      pullMenuBtn.addEventListener('click', () => {
+        const isHidden = expandedDrawer.style.display === 'none';
+        expandedDrawer.style.display = isHidden ? 'flex' : 'none';
+        if (pullBtnIcon) pullBtnIcon.textContent = isHidden ? '▲' : '▼';
+        if (pullBtnLabel) pullBtnLabel.textContent = isHidden ? 'Close' : 'Menu';
       });
     }
 
