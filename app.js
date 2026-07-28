@@ -305,14 +305,13 @@
     opponentBall: { x: 300, y: 456, inAir: false, radius: 14 }
   };
 
-  // Simulated live online presence counter
   let onlineBallersCount = Math.floor(Math.random() * 5) + 3;
-  if (onlineCountText) onlineCountText.textContent = `${onlineBallersCount} Ballers Online`;
+  if (onlineCountText) onlineCountText.textContent = `${onlineBallersCount} Online`;
 
   setInterval(() => {
     const delta = Math.floor(Math.random() * 3) - 1;
     onlineBallersCount = Math.max(2, Math.min(15, onlineBallersCount + delta));
-    if (onlineCountText) onlineCountText.textContent = `${onlineBallersCount} Ballers Online`;
+    if (onlineCountText) onlineCountText.textContent = `${onlineBallersCount} Online`;
   }, 7000);
 
   function broadcastShotEvent(score, spotKey, power) {
@@ -637,7 +636,7 @@
   };
 
   let state = {
-    gameMode: 'timer', // 'timer' (60s Time Attack), 'mp' (1v1 Battle), 'endless'
+    gameMode: 'timer',
     score: 0,
     highScoreEndless: parseInt(localStorage.getItem('basketbola_highscore_endless') || '0', 10),
     highScoreTimer: parseInt(localStorage.getItem('basketbola_highscore_timer') || '0', 10),
@@ -760,7 +759,6 @@
         timerStatCard.classList.add('timer-warning');
       }
 
-      // Simulate opponent score gains in 1v1 battle mode
       if (state.gameMode === 'mp' && Math.random() < 0.35) {
         multiplayerState.opponentScore += (Math.random() > 0.5 ? 3 : 2);
         if (opponentScoreDisplay) opponentScoreDisplay.textContent = multiplayerState.opponentScore;
@@ -951,7 +949,6 @@
       ball.vy += gravity;
       ball.rotation += (ball.vx * 0.03) / steps;
 
-      // 1. Backboard Collision
       if (
         ball.x + ball.radius >= COURT.backboardX &&
         ball.x - ball.radius <= COURT.backboardX + 12 &&
@@ -967,11 +964,9 @@
         }
       }
 
-      // 2. Rim Collision
       checkRimPointCollision(rimFront);
       checkRimPointCollision(rimBack);
 
-      // 3. Score Detection
       if (
         !ball.scored &&
         ball.vy > 0 &&
@@ -983,7 +978,6 @@
         handleScoreSuccess();
       }
 
-      // 4. Floor Collision
       if (ball.y + ball.radius >= COURT.floorY) {
         ball.y = COURT.floorY - ball.radius;
         ball.vy = -ball.vy * 0.5;
@@ -1484,6 +1478,19 @@
 
   // --- Event Listeners & Keyboard / Touch Bindings ---
   function setupEvents() {
+    // Collapsible Prayer Bar Drawer Toggle
+    const prayerToggleBtn = document.getElementById('prayer-toggle-btn');
+    const prayerTimesDrawer = document.getElementById('prayer-times-drawer');
+    const prayerChevron = document.getElementById('prayer-chevron');
+
+    if (prayerToggleBtn && prayerTimesDrawer) {
+      prayerToggleBtn.addEventListener('click', () => {
+        const isHidden = prayerTimesDrawer.style.display === 'none';
+        prayerTimesDrawer.style.display = isHidden ? 'flex' : 'none';
+        if (prayerChevron) prayerChevron.textContent = isHidden ? '📅 Schedule ▴' : '📅 Schedule ▾';
+      });
+    }
+
     // Leaderboard Listeners
     if (openLeaderboardBtn) {
       openLeaderboardBtn.addEventListener('click', () => {

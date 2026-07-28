@@ -16,63 +16,75 @@
 <body>
 
   <div class="app-container">
-    <!-- Top Bar: Hijri Calendar & Singapore Prayer Times & Online Presence -->
+    <!-- Top Bar: Collapsible Hijri, Singapore Prayer Times & Online Presence -->
     <aside class="prayer-top-bar" id="prayer-top-bar">
-      <div class="prayer-bar-left">
-        <div class="hijri-badge">
-          <span class="moon-icon">🌙</span>
+      <!-- Compact Single-Line Pill (Default View) -->
+      <div class="prayer-compact-bar" id="prayer-toggle-btn" title="Click to view full prayer times schedule">
+        <div class="p-compact-item hijri">
+          <span>🌙</span>
           <span id="hijri-date-text">Loading Hijri...</span>
         </div>
-        <div class="location-tag">🇸🇬 Singapore (MUIS)</div>
-        
-        <!-- Online Presence Counter -->
-        <div class="online-presence-badge" id="online-presence-badge" title="Live online players looking for match">
+        <div class="p-compact-item countdown">
+          <span class="next-lbl">Next:</span> <strong id="next-prayer-name">...</strong> <span id="next-prayer-timer">--:--:--</span>
+        </div>
+        <div class="p-compact-item online">
           <span class="pulse-dot">🟢</span>
-          <span id="online-count-text">3 Ballers Online</span>
+          <span id="online-count-text">3 Online</span>
         </div>
+        <div class="p-compact-toggle" id="prayer-chevron">📅 Schedule ▾</div>
       </div>
 
-      <div class="prayer-times-strip" id="prayer-times-strip">
-        <div class="prayer-chip" id="chip-fajr">
-          <span class="p-name">Subuh</span>
-          <span class="p-time" id="time-fajr">--:--</span>
+      <!-- Collapsible Full 6-Prayer Schedule Drawer -->
+      <div class="prayer-times-drawer" id="prayer-times-drawer" style="display: none;">
+        <div class="prayer-times-grid">
+          <div class="prayer-chip" id="chip-fajr">
+            <span class="p-name">Subuh</span>
+            <span class="p-time" id="time-fajr">--:--</span>
+          </div>
+          <div class="prayer-chip" id="chip-sunrise">
+            <span class="p-name">Syuruk</span>
+            <span class="p-time" id="time-sunrise">--:--</span>
+          </div>
+          <div class="prayer-chip" id="chip-dhuhr">
+            <span class="p-name">Zohor</span>
+            <span class="p-time" id="time-dhuhr">--:--</span>
+          </div>
+          <div class="prayer-chip" id="chip-asr">
+            <span class="p-name">Asar</span>
+            <span class="p-time" id="time-asr">--:--</span>
+          </div>
+          <div class="prayer-chip" id="chip-maghrib">
+            <span class="p-name">Maghrib</span>
+            <span class="p-time" id="time-maghrib">--:--</span>
+          </div>
+          <div class="prayer-chip" id="chip-isha">
+            <span class="p-name">Isyak</span>
+            <span class="p-time" id="time-isha">--:--</span>
+          </div>
         </div>
-        <div class="prayer-chip" id="chip-sunrise">
-          <span class="p-name">Syuruk</span>
-          <span class="p-time" id="time-sunrise">--:--</span>
-        </div>
-        <div class="prayer-chip" id="chip-dhuhr">
-          <span class="p-name">Zohor</span>
-          <span class="p-time" id="time-dhuhr">--:--</span>
-        </div>
-        <div class="prayer-chip" id="chip-asr">
-          <span class="p-name">Asar</span>
-          <span class="p-time" id="time-asr">--:--</span>
-        </div>
-        <div class="prayer-chip" id="chip-maghrib">
-          <span class="p-name">Maghrib</span>
-          <span class="p-time" id="time-maghrib">--:--</span>
-        </div>
-        <div class="prayer-chip" id="chip-isha">
-          <span class="p-name">Isyak</span>
-          <span class="p-time" id="time-isha">--:--</span>
-        </div>
-      </div>
-
-      <div class="prayer-bar-right">
-        <div class="countdown-badge" id="next-prayer-countdown">
-          <span class="cd-label">Next: <strong id="next-prayer-name">...</strong></span>
-          <span class="cd-timer" id="next-prayer-timer">--:--:--</span>
-        </div>
+        <div class="location-tag">🇸🇬 Singapore MUIS Method</div>
       </div>
     </aside>
 
-    <!-- Header / Scoreboard & Mode Switcher -->
+    <!-- Sleek Compact Header / Scoreboard -->
     <header class="scoreboard">
-      <div class="brand-group">
+      <div class="brand-mode-row">
         <div class="brand">
           <span class="icon">🏀</span>
           <h1>BASKETBOLA</h1>
+        </div>
+
+        <!-- Mode Selector Pills -->
+        <div class="mode-selector">
+          <button class="mode-btn active" id="mode-timer-btn" type="button" title="60 seconds rapid fire challenge">
+            <span>⏱️</span> 60s
+          </button>
+          <button class="mode-btn mode-mp-btn" id="mode-mp-btn" type="button" title="Live 1v1 Real-Time Battle">
+            <span>⚔️</span> 1v1
+          </button>
+          <button class="mode-btn" id="mode-endless-btn" type="button" title="Practice without timer">
+            <span>♾️</span> Endless
+          </button>
         </div>
 
         <button class="leaderboard-header-btn" id="open-leaderboard-btn" type="button">
@@ -80,27 +92,15 @@
         </button>
       </div>
 
-      <!-- Mode Selector Pills -->
-      <div class="mode-selector">
-        <button class="mode-btn active" id="mode-timer-btn" type="button" title="60 seconds rapid fire challenge">
-          <span>⏱️</span> 60s Time Attack
-        </button>
-        <button class="mode-btn mode-mp-btn" id="mode-mp-btn" type="button" title="Live 1v1 Real-Time Battle">
-          <span>⚔️</span> 1v1 Battle
-        </button>
-        <button class="mode-btn" id="mode-endless-btn" type="button" title="Practice without timer">
-          <span>♾️</span> Endless
-        </button>
-      </div>
-
+      <!-- Minimal Score Stats Strip -->
       <div class="stats-grid">
         <div class="stat-card score-card">
-          <span class="label" id="score-card-label">SCORE</span>
+          <span class="label">SCORE</span>
           <span class="value" id="score-display">0</span>
         </div>
         
         <div class="stat-card timer-card" id="timer-stat-card">
-          <span class="label">TIME LEFT</span>
+          <span class="label">TIME</span>
           <span class="value timer-value" id="timer-display">60s</span>
         </div>
 
@@ -111,7 +111,7 @@
         </div>
 
         <div class="stat-card" id="high-score-card">
-          <span class="label">HIGH SCORE</span>
+          <span class="label">HIGH</span>
           <span class="value" id="high-score-display">0</span>
         </div>
 
@@ -121,13 +121,13 @@
         </div>
 
         <div class="stat-card">
-          <span class="label">ACCURACY</span>
+          <span class="label">ACC</span>
           <span class="value" id="accuracy-display">0%</span>
         </div>
       </div>
     </header>
 
-    <!-- Main Game Area -->
+    <!-- Main Game Area (Hero Court) -->
     <main class="game-wrapper">
       <!-- Canvas Container -->
       <div class="canvas-container" id="canvas-container">
@@ -160,7 +160,7 @@
         </div>
       </div>
 
-      <!-- Mobile & Touch Arcade Controller -->
+      <!-- Mobile & Touch Arcade Controller Deck -->
       <section class="touch-controller-deck">
         <div class="touch-row top-row">
           <button class="action-btn spot-btn" id="btn-toggle-spot" type="button">
@@ -181,56 +181,58 @@
         </div>
       </section>
 
-      <!-- Desktop Keyboard Controls Guide -->
+      <!-- Collapsible Settings & Keyboard Controls Drawer -->
       <section class="controls-panel">
-        <div class="panel-header">
-          <h2>CONTROLS & SETTINGS</h2>
-          <button id="sound-toggle-btn" class="sound-btn" type="button" title="Toggle Sound Effects">
-            <span id="sound-icon">🔊</span> Sound ON
-          </button>
-        </div>
+        <details class="controls-details">
+          <summary class="panel-header-summary">
+            <span>⚙️ CONTROLS & SOUND SETTINGS</span>
+            <button id="sound-toggle-btn" class="sound-btn" type="button" title="Toggle Sound Effects">
+              <span id="sound-icon">🔊</span> Sound ON
+            </button>
+          </summary>
 
-        <div class="keys-grid">
-          <div class="key-card">
-            <div class="key-cap space">SPACE</div>
-            <div class="key-desc">
-              <strong>Shoot Ball</strong>
-              <span>Hold to charge, release to shoot</span>
+          <div class="keys-grid">
+            <div class="key-card">
+              <div class="key-cap space">SPACE</div>
+              <div class="key-desc">
+                <strong>Shoot Ball</strong>
+                <span>Hold to charge, release to shoot</span>
+              </div>
+            </div>
+
+            <div class="key-card">
+              <div class="key-caps-inline">
+                <span class="key-cap">1</span>
+                <span class="key-cap">2</span>
+                <span class="key-cap">←</span>
+                <span class="key-cap">→</span>
+              </div>
+              <div class="key-desc">
+                <strong>Switch Position</strong>
+                <span>Toggle 2PT / 3PT spot</span>
+              </div>
+            </div>
+
+            <div class="key-card">
+              <div class="key-caps-inline">
+                <span class="key-cap">↑</span>
+                <span class="key-cap">↓</span>
+              </div>
+              <div class="key-desc">
+                <strong>Adjust Angle</strong>
+                <span>Fine tune shot trajectory</span>
+              </div>
+            </div>
+
+            <div class="key-card">
+              <div class="key-cap">R</div>
+              <div class="key-desc">
+                <strong>Reset / Retry</strong>
+                <span>Reset ball position</span>
+              </div>
             </div>
           </div>
-
-          <div class="key-card">
-            <div class="key-caps-inline">
-              <span class="key-cap">1</span>
-              <span class="key-cap">2</span>
-              <span class="key-cap">←</span>
-              <span class="key-cap">→</span>
-            </div>
-            <div class="key-desc">
-              <strong>Switch Position</strong>
-              <span>Toggle 2PT / 3PT spot</span>
-            </div>
-          </div>
-
-          <div class="key-card">
-            <div class="key-caps-inline">
-              <span class="key-cap">↑</span>
-              <span class="key-cap">↓</span>
-            </div>
-            <div class="key-desc">
-              <strong>Adjust Angle</strong>
-              <span>Fine tune shot trajectory</span>
-            </div>
-          </div>
-
-          <div class="key-card">
-            <div class="key-cap">R</div>
-            <div class="key-desc">
-              <strong>Reset / Retry</strong>
-              <span>Reset ball position</span>
-            </div>
-          </div>
-        </div>
+        </details>
       </section>
     </main>
 
@@ -241,7 +243,7 @@
     </footer>
   </div>
 
-  <!-- Fullscreen Fixed Modals (Positioned at Root Body Level for Universal Mobile Responsiveness) -->
+  <!-- Fullscreen Fixed Modals -->
 
   <!-- Game Over / Match End Modal Overlay -->
   <div class="modal-overlay" id="game-over-modal">
@@ -281,7 +283,7 @@
           <select id="player-country" aria-label="Country">
             <option value="🇸🇬">🇸🇬 Singapore</option>
             <option value="🇲🇾">🇲🇾 Malaysia</option>
-            <option value="🇮🇩">🇮🇩 Indonesia</option>
+            <option value="🇮どもの">🇮🇩 Indonesia</option>
             <option value="🇵🇭">🇵🇭 Philippines</option>
             <option value="🇹🇭">🇹🇭 Thailand</option>
             <option value="🇯🇵">🇯🇵 Japan</option>
