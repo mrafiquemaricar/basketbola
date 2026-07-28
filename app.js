@@ -1,0 +1,982 @@
+/**
+ * Basketbola - Web Basketball Arcade Game Engine
+ * Features: 2PT & 3PT Shooting Spots, Canvas Physics, Arc Trajectory,
+ * Scoreboard, Streaks, Particle FX, Web Audio Sound Synthesis.
+ */
+
+(function () {
+  'use strict';
+
+  // --- Canvas & DOM Setup ---
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
+
+  // DOM Elements
+  const scoreDisplay = document.getElementById('score-display');
+  const highScoreDisplay = document.getElementById('high-score-display');
+  const streakDisplay = document.getElementById('streak-display');
+  const streakContainer = document.getElementById('streak-container');
+  const accuracyDisplay = document.getElementById('accuracy-display');
+  const shotTypeBadge = document.getElementById('shot-type-badge');
+  const shotTypeText = document.getElementById('shot-type-text');
+  const shotPointsTag = document.getElementById('shot-points-tag');
+  const nextSpotName = document.getElementById('next-spot-name');
+  const powerMeterWrapper = document.getElementById('power-meter-wrapper');
+  const powerMeterFill = document.getElementById('power-meter-fill');
+  const shotResultBanner = document.getElementById('shot-result-banner');
+  const resultText = document.getElementById('result-text');
+  const angleDisplay = document.getElementById('angle-display');
+  const soundToggleBtn = document.getElementById('sound-toggle-btn');
+  const soundIcon = document.getElementById('sound-icon');
+
+  // On-screen Buttons
+  const btnToggleSpot = document.getElementById('btn-toggle-spot');
+  const btnAngleDown = document.getElementById('btn-angle-down');
+  const btnAngleUp = document.getElementById('btn-angle-up');
+  const btnShoot = document.getElementById('btn-shoot');
+
+  // --- Sound Effects Synthesizer (Web Audio API) ---
+  let soundEnabled = true;
+  let audioCtx = null;
+
+  function initAudio() {
+    if (!audioCtx) {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (AudioContextClass) {
+        audioCtx = new AudioContextClass();
+      }
+    }
+    if (audioCtx && audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+  }
+
+  function playBounceSound() {
+    if (!soundEnabled) return;
+    initAudio();
+    if (!audioCtx) return;
+
+    try {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(140, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.12);
+
+      gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.12);
+
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.12);
+    } catch (e) {
+      console.warn("Audio error:", e);
+    }
+  }
+
+  function playRimSound() {
+    if (!soundEnabled) return;
+    initAudio();
+    if (!audioCtx) return;
+
+    try {
+      // Metal clang sound using two sine oscillators
+      const osc1 = audioCtx.createOscillator();
+      const osc2 = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+
+      osc1.type = 'triangle';
+      osc2.type = 'sine';
+
+      osc1.frequency.setValueAtTime(440, audioCtx.currentTime);
+      osc2.frequency.setValueAtTime(880, audioCtx.currentTime);
+
+      gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.18);
+
+      osc1.connect(gain);
+      osc2.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      osc1.start();
+      osc2.start();
+      osc1.stop(audioCtx.currentTime + 0.18);
+      osc2.stop(audioCtx.currentTime + 0.18);
+    } catch (e) {
+      console.warn("Audio error:", e);
+    }
+  }
+
+  function playSwishSound() {
+    if (!soundEnabled) return;
+    initAudio();
+    if (!audioCtx) return;
+
+    try {
+      // Noise burst filtered to sound like net swish
+      const bufferSize = audioCtx.sampleRate * 0.25;
+      const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+      const output = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        output[i] = Math.random() * 2 - 1;
+      }
+
+      const whiteNoise = audioCtx.createBufferSource();
+      whiteNoise.buffer = buffer;
+
+      const filter = audioCtx.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.setValueAtTime(1200, audioCtx.currentTime);
+      filter.Q.setValueAtTime(3.0, audioCtx.currentTime);
+
+      const gain = audioCtx.createGain();
+      gain.gain.setValueAtTime(0.01, audioCtx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.5, audioCtx.currentTime + 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
+
+      whiteNoise.connect(filter);
+      filter.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      whiteNoise.start();
+      whiteNoise.stop(audioCtx.currentTime + 0.25);
+    } catch (e) {
+      console.warn("Audio error:", e);
+    }
+  }
+
+  function playCheerSound() {
+    if (!soundEnabled) return;
+    initAudio();
+    if (!audioCtx) return;
+
+    try {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+      osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.08); // E5
+      osc.frequency.setValueAtTime(783.99, audioCtx.currentTime + 0.16); // G5
+
+      gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.4);
+    } catch (e) {
+      console.warn("Audio error:", e);
+    }
+  }
+
+  // --- Game State Constants & Variables ---
+  const COURT = {
+    floorY: 480,
+    threePointLineX: 320,
+    keyLineX: 520,
+    hoopX: 830,
+    hoopY: 230,
+    rimRadius: 4,
+    rimWidth: 50,
+    backboardX: 880,
+    backboardY1: 140,
+    backboardY2: 290,
+  };
+
+  // Shooting Locations
+  const SPOTS = {
+    '3pt': { x: 160, label: '3-POINTER SPOT', points: 3, nextLabel: '2PT' },
+    '2pt': { x: 420, label: '2-POINTER SPOT', points: 2, nextLabel: '3PT' }
+  };
+
+  let state = {
+    score: 0,
+    highScore: parseInt(localStorage.getItem('basketbola_highscore') || '0', 10),
+    streak: 0,
+    shotsTaken: 0,
+    shotsMade: 0,
+    currentSpotKey: '3pt',
+    angle: 52, // launch angle in degrees
+    power: 0, // 0 to 100
+    powerDirection: 1.5, // charging speed
+    isCharging: false,
+    soundOn: true,
+    bannerTimeout: null,
+    netSwishTimer: 0
+  };
+
+  // Ball Object
+  const ball = {
+    x: SPOTS['3pt'].x,
+    y: COURT.floorY - 24,
+    radius: 14,
+    vx: 0,
+    vy: 0,
+    rotation: 0,
+    inAir: false,
+    scored: false,
+    hitRim: false,
+    hitBackboard: false,
+    prevY: 0,
+    trail: []
+  };
+
+  // Rim Points for Collision
+  const rimFront = { x: COURT.hoopX - COURT.rimWidth, y: COURT.hoopY };
+  const rimBack = { x: COURT.hoopX, y: COURT.hoopY };
+
+  // Particle System
+  let particles = [];
+
+  function createSwishParticles(x, y) {
+    particles = [];
+    const colors = ['#00e676', '#00e5ff', '#ffbd00', '#ff6b00', '#ffffff'];
+    for (let i = 0; i < 35; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 2 + Math.random() * 6;
+      particles.push({
+        x: x,
+        y: y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed - 1,
+        radius: 2 + Math.random() * 4,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        life: 1.0,
+        decay: 0.02 + Math.random() * 0.03
+      });
+    }
+  }
+
+  function updateParticles() {
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.15; // slight gravity
+      p.life -= p.decay;
+      if (p.life <= 0) {
+        particles.splice(i, 1);
+      }
+    }
+  }
+
+  // --- Reset & Position Handlers ---
+  function resetBall() {
+    const spot = SPOTS[state.currentSpotKey];
+    ball.x = spot.x;
+    ball.y = COURT.floorY - ball.radius - 10;
+    ball.vx = 0;
+    ball.vy = 0;
+    ball.inAir = false;
+    ball.scored = false;
+    ball.hitRim = false;
+    ball.hitBackboard = false;
+    ball.trail = [];
+    state.isCharging = false;
+    state.power = 0;
+    powerMeterFill.style.width = '0%';
+    powerMeterWrapper.classList.remove('charging');
+    if (btnShoot) btnShoot.classList.remove('active');
+  }
+
+  function setSpot(spotKey) {
+    if (ball.inAir) return;
+    state.currentSpotKey = spotKey;
+    const spot = SPOTS[spotKey];
+    
+    // Update Badge & UI
+    shotTypeText.textContent = spot.label;
+    shotPointsTag.textContent = `+${spot.points} PTS`;
+    nextSpotName.textContent = spot.nextLabel;
+
+    if (spotKey === '3pt') {
+      shotPointsTag.style.background = 'var(--accent-orange)';
+    } else {
+      shotPointsTag.style.background = 'var(--accent-cyan)';
+    }
+
+    resetBall();
+  }
+
+  function toggleSpot() {
+    const nextKey = state.currentSpotKey === '3pt' ? '2pt' : '3pt';
+    setSpot(nextKey);
+  }
+
+  function setAngle(delta) {
+    if (ball.inAir) return;
+    state.angle = Math.max(30, Math.min(80, state.angle + delta));
+    angleDisplay.textContent = `${state.angle}°`;
+  }
+
+  // --- Shooting Mechanics ---
+  function startCharging() {
+    if (ball.inAir || state.isCharging) return;
+    initAudio();
+    state.isCharging = true;
+    state.power = 0;
+    state.powerDirection = 1.6;
+    powerMeterWrapper.classList.add('charging');
+    if (btnShoot) btnShoot.classList.add('active');
+  }
+
+  function releaseShot() {
+    if (!state.isCharging || ball.inAir) return;
+
+    state.isCharging = false;
+    powerMeterWrapper.classList.remove('charging');
+    if (btnShoot) btnShoot.classList.remove('active');
+
+    // Launch calculation
+    const spot = SPOTS[state.currentSpotKey];
+    const powerRatio = state.power / 100;
+    
+    // Base speed scaled for canvas distance
+    // 3pt distance is ~670px, 2pt distance is ~410px
+    const minVel = spotKeyVelocityMin(state.currentSpotKey);
+    const maxVel = spotKeyVelocityMax(state.currentSpotKey);
+    const v0 = minVel + powerRatio * (maxVel - minVel);
+
+    const rad = (state.angle * Math.PI) / 180;
+    ball.vx = v0 * Math.cos(rad);
+    ball.vy = -v0 * Math.sin(rad);
+
+    ball.inAir = true;
+    ball.scored = false;
+    ball.hitRim = false;
+    ball.hitBackboard = false;
+    ball.prevY = ball.y;
+
+    state.shotsTaken++;
+    updateScoreboardUI();
+  }
+
+  function spotKeyVelocityMin(spotKey) {
+    return spotKey === '3pt' ? 14.5 : 12.0;
+  }
+
+  function spotKeyVelocityMax(spotKey) {
+    return spotKey === '3pt' ? 24.5 : 20.0;
+  }
+
+  // --- Physics & Collision Engine ---
+  function updatePhysics() {
+    // Power Meter animation loop while spacebar is held down
+    if (state.isCharging) {
+      state.power += state.powerDirection;
+      if (state.power >= 100) {
+        state.power = 100;
+        state.powerDirection = -1.6; // Ping-pong back if overcharged!
+      } else if (state.power <= 0) {
+        state.power = 0;
+        state.powerDirection = 1.6;
+      }
+      powerMeterFill.style.width = `${state.power}%`;
+    }
+
+    if (state.netSwishTimer > 0) {
+      state.netSwishTimer--;
+    }
+
+    if (!ball.inAir) return;
+
+    // Ball motion trail
+    ball.trail.push({ x: ball.x, y: ball.y });
+    if (ball.trail.length > 8) ball.trail.shift();
+
+    // Sub-step physics integration for fine rim accuracy
+    const steps = 4;
+    const gravity = 0.45 / steps;
+
+    for (let i = 0; i < steps; i++) {
+      ball.prevY = ball.y;
+      ball.x += ball.vx / steps;
+      ball.y += ball.vy / steps;
+      ball.vy += gravity;
+      ball.rotation += (ball.vx * 0.03) / steps;
+
+      // 1. Backboard Collision
+      if (
+        ball.x + ball.radius >= COURT.backboardX &&
+        ball.x - ball.radius <= COURT.backboardX + 12 &&
+        ball.y >= COURT.backboardY1 &&
+        ball.y <= COURT.backboardY2
+      ) {
+        if (ball.vx > 0) {
+          ball.vx = -ball.vx * 0.65;
+          ball.vy = ball.vy * 0.85;
+          ball.x = COURT.backboardX - ball.radius;
+          ball.hitBackboard = true;
+          playRimSound();
+        }
+      }
+
+      // 2. Rim Collision (Front Rim & Back Rim)
+      checkRimPointCollision(rimFront);
+      checkRimPointCollision(rimBack);
+
+      // 3. Score Detection (Passes down through rim plane)
+      if (
+        !ball.scored &&
+        ball.vy > 0 && // moving downwards
+        ball.prevY < COURT.hoopY &&
+        ball.y >= COURT.hoopY &&
+        ball.x > rimFront.x + 5 &&
+        ball.x < rimBack.x - 5
+      ) {
+        handleScoreSuccess();
+      }
+
+      // 4. Floor Collision / Out of bounds reset
+      if (ball.y + ball.radius >= COURT.floorY) {
+        ball.y = COURT.floorY - ball.radius;
+        ball.vy = -ball.vy * 0.5; // floor bounce
+        ball.vx = ball.vx * 0.7;
+        playBounceSound();
+
+        // If stopped or moving very slow on floor, handle shot completion
+        if (Math.abs(ball.vy) < 1 && Math.abs(ball.vx) < 1) {
+          setTimeout(() => {
+            if (ball.inAir) handleShotFinished();
+          }, 400);
+          break;
+        }
+      }
+
+      // Screen boundaries
+      if (ball.x > canvas.width + 50 || ball.x < -50 || ball.y > canvas.height + 50) {
+        handleShotFinished();
+        break;
+      }
+    }
+
+    updateParticles();
+  }
+
+  function checkRimPointCollision(rimPt) {
+    const dx = ball.x - rimPt.x;
+    const dy = ball.y - rimPt.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    const minDist = ball.radius + COURT.rimRadius;
+
+    if (dist < minDist && dist > 0) {
+      // Normal collision vector
+      const nx = dx / dist;
+      const ny = dy / dist;
+
+      // Reposition out of overlap
+      ball.x = rimPt.x + nx * minDist;
+      ball.y = rimPt.y + ny * minDist;
+
+      // Reflect velocity
+      const dot = ball.vx * nx + ball.vy * ny;
+      ball.vx = (ball.vx - 2 * dot * nx) * 0.7;
+      ball.vy = (ball.vy - 2 * dot * ny) * 0.7;
+
+      ball.hitRim = true;
+      playRimSound();
+    }
+  }
+
+  function handleScoreSuccess() {
+    ball.scored = true;
+    const pts = SPOTS[state.currentSpotKey].points;
+
+    state.score += pts;
+    state.shotsMade++;
+    state.streak++;
+    if (state.score > state.highScore) {
+      state.highScore = state.score;
+      localStorage.setItem('basketbola_highscore', state.highScore.toString());
+    }
+
+    state.netSwishTimer = 25; // Trigger net deform animation
+    createSwishParticles(COURT.hoopX - COURT.rimWidth / 2, COURT.hoopY + 10);
+
+    if (ball.hitBackboard && !ball.hitRim) {
+      showResultBanner(`BANK SHOT! +${pts}`, 'swish');
+      playSwishSound();
+    } else if (!ball.hitRim) {
+      showResultBanner(`SWISH! +${pts}`, 'swish');
+      playSwishSound();
+      playCheerSound();
+    } else {
+      showResultBanner(`BUCKET! +${pts}`, 'swish');
+      playSwishSound();
+    }
+
+    updateScoreboardUI();
+    setTimeout(() => {
+      resetBall();
+    }, 1200);
+  }
+
+  function handleShotFinished() {
+    if (ball.scored) return;
+
+    // Shot missed
+    state.streak = 0;
+    if (!ball.hitRim && !ball.hitBackboard) {
+      showResultBanner('AIRBALL!', 'miss');
+    } else {
+      showResultBanner('MISSED!', 'miss');
+    }
+
+    updateScoreboardUI();
+    resetBall();
+  }
+
+  function showResultBanner(text, type) {
+    if (state.bannerTimeout) clearTimeout(state.bannerTimeout);
+    resultText.textContent = text;
+    shotResultBanner.className = `shot-result-banner show ${type}`;
+
+    state.bannerTimeout = setTimeout(() => {
+      shotResultBanner.className = 'shot-result-banner';
+    }, 1500);
+  }
+
+  function updateScoreboardUI() {
+    scoreDisplay.textContent = state.score;
+    highScoreDisplay.textContent = state.highScore;
+
+    // Streak UI with hot glow
+    if (state.streak >= 3) {
+      streakDisplay.textContent = `${state.streak} 🔥`;
+      streakContainer.classList.add('hot');
+    } else {
+      streakDisplay.textContent = `${state.streak}`;
+      streakContainer.classList.remove('hot');
+    }
+
+    // Accuracy
+    const pct = state.shotsTaken > 0 ? Math.round((state.shotsMade / state.shotsTaken) * 100) : 0;
+    accuracyDisplay.textContent = `${pct}%`;
+  }
+
+  // --- Rendering Engine ---
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    drawBackgroundStadium();
+    drawCourtFloor();
+    drawHoopAndBackboard();
+    drawShooterSpotMarker();
+    drawTrajectoryPreview();
+    drawBallTrail();
+    drawBasketball();
+    drawParticles();
+    drawAimGuideHud();
+  }
+
+  function drawBackgroundStadium() {
+    // Stadium gradient background
+    const bgGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    bgGrad.addColorStop(0, '#0a0d1a');
+    bgGrad.addColorStop(0.6, '#121729');
+    bgGrad.addColorStop(1, '#181e33');
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Stadium light glow effects
+    ctx.save();
+    const lightGrad1 = ctx.createRadialGradient(830, 80, 10, 830, 80, 300);
+    lightGrad1.addColorStop(0, 'rgba(255, 255, 255, 0.15)');
+    lightGrad1.addColorStop(1, 'transparent');
+    ctx.fillStyle = lightGrad1;
+    ctx.beginPath();
+    ctx.arc(830, 80, 300, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawCourtFloor() {
+    const floorY = COURT.floorY;
+
+    // Wooden Court Floor Gradient
+    const floorGrad = ctx.createLinearGradient(0, floorY, 0, canvas.height);
+    floorGrad.addColorStop(0, '#c67d34');
+    floorGrad.addColorStop(0.15, '#a66224');
+    floorGrad.addColorStop(1, '#5c330e');
+    ctx.fillStyle = floorGrad;
+    ctx.fillRect(0, floorY, canvas.width, canvas.height - floorY);
+
+    // Floor top polish line
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, floorY);
+    ctx.lineTo(canvas.width, floorY);
+    ctx.stroke();
+
+    // 3-Point Arc & Key Lines on Court
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+    ctx.lineWidth = 3;
+
+    // 3PT Line
+    ctx.beginPath();
+    ctx.moveTo(COURT.threePointLineX, floorY);
+    ctx.lineTo(COURT.threePointLineX, floorY + 40);
+    ctx.stroke();
+
+    ctx.setLineDash([8, 6]);
+    ctx.beginPath();
+    ctx.arc(COURT.hoopX - 100, floorY, 340, Math.PI, Math.PI * 1.5, false);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Paint / Key Area Fill
+    ctx.fillStyle = 'rgba(180, 40, 40, 0.35)';
+    ctx.fillRect(COURT.keyLineX, floorY, canvas.width - COURT.keyLineX, canvas.height - floorY);
+
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(COURT.keyLineX, floorY, canvas.width - COURT.keyLineX, canvas.height - floorY);
+  }
+
+  function drawHoopAndBackboard() {
+    // 1. Hoop Support Pole & Base
+    ctx.fillStyle = '#222738';
+    ctx.fillRect(COURT.backboardX + 10, COURT.backboardY1 - 20, 25, COURT.floorY - (COURT.backboardY1 - 20));
+    
+    ctx.fillStyle = '#ff6b00';
+    ctx.fillRect(COURT.backboardX + 5, COURT.backboardY1 + 50, 15, 8);
+
+    // 2. Backboard (Glass with border)
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 4;
+    ctx.fillRect(COURT.backboardX, COURT.backboardY1, 10, COURT.backboardY2 - COURT.backboardY1);
+    ctx.strokeRect(COURT.backboardX, COURT.backboardY1, 10, COURT.backboardY2 - COURT.backboardY1);
+
+    // Target Box on Backboard
+    ctx.strokeStyle = '#ff3d00';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(COURT.backboardX - 1, COURT.hoopY - 45, 2, 50);
+
+    // 3. Rim (Metallic red-orange ring)
+    ctx.strokeStyle = '#ff3d00';
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.moveTo(rimFront.x, rimFront.y);
+    ctx.lineTo(rimBack.x, rimBack.y);
+    ctx.stroke();
+
+    // Front Rim Knocker Circle
+    ctx.fillStyle = '#ff3d00';
+    ctx.beginPath();
+    ctx.arc(rimFront.x, rimFront.y, COURT.rimRadius + 2, 0, Math.PI * 2);
+    ctx.arc(rimBack.x, rimBack.y, COURT.rimRadius + 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 4. Net (Woven Strings with Swish deformation)
+    const netTopY = COURT.hoopY;
+    const netBottomY = COURT.hoopY + 45;
+    const swishOffset = state.netSwishTimer > 0 ? Math.sin(state.netSwishTimer * 0.4) * 12 : 0;
+
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+    ctx.lineWidth = 1.8;
+
+    const netSegments = 5;
+    for (let i = 0; i <= netSegments; i++) {
+      const ratio = i / netSegments;
+      const topX = rimFront.x + ratio * COURT.rimWidth;
+      const bottomX = (rimFront.x + 10) + ratio * (COURT.rimWidth - 20) + swishOffset * (1 - ratio);
+
+      ctx.beginPath();
+      ctx.moveTo(topX, netTopY);
+      ctx.lineTo(bottomX, netBottomY + Math.abs(swishOffset) * 0.3);
+      ctx.stroke();
+    }
+
+    // Horizontal Net Rings
+    for (let j = 1; j <= 3; j++) {
+      const ringY = netTopY + (j / 3) * 45;
+      const ringWidth = COURT.rimWidth - j * 5;
+      const ringX = rimFront.x + (j * 2.5) + swishOffset * (j / 3);
+
+      ctx.beginPath();
+      ctx.moveTo(ringX, ringY);
+      ctx.lineTo(ringX + ringWidth, ringY);
+      ctx.stroke();
+    }
+  }
+
+  function drawShooterSpotMarker() {
+    const spot = SPOTS[state.currentSpotKey];
+
+    // Pulsing circle spot indicator on court floor
+    ctx.save();
+    ctx.fillStyle = state.currentSpotKey === '3pt' ? 'rgba(255, 107, 0, 0.25)' : 'rgba(0, 229, 255, 0.25)';
+    ctx.strokeStyle = state.currentSpotKey === '3pt' ? 'var(--accent-orange)' : 'var(--accent-cyan)';
+    ctx.lineWidth = 2;
+
+    ctx.beginPath();
+    ctx.ellipse(spot.x, COURT.floorY, 36, 12, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Shooter Silhouette / Ball Rack
+    if (!ball.inAir) {
+      // Shooter Stick/Avatar Silhouette
+      ctx.fillStyle = '#222a42';
+      ctx.fillRect(spot.x - 12, COURT.floorY - 60, 24, 60);
+
+      // Player Head
+      ctx.beginPath();
+      ctx.arc(spot.x, COURT.floorY - 75, 14, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function drawTrajectoryPreview() {
+    if (ball.inAir) return;
+
+    const spot = SPOTS[state.currentSpotKey];
+    const previewPower = state.isCharging ? state.power : 50; // default preview at 50%
+    const powerRatio = previewPower / 100;
+
+    const minVel = spotKeyVelocityMin(state.currentSpotKey);
+    const maxVel = spotKeyVelocityMax(state.currentSpotKey);
+    const v0 = minVel + powerRatio * (maxVel - minVel);
+
+    const rad = (state.angle * Math.PI) / 180;
+    let vx = v0 * Math.cos(rad);
+    let vy = -v0 * Math.sin(rad);
+
+    let simX = spot.x;
+    let simY = COURT.floorY - ball.radius - 10;
+
+    ctx.save();
+    ctx.strokeStyle = state.isCharging ? 'rgba(255, 107, 0, 0.7)' : 'rgba(255, 255, 255, 0.3)';
+    ctx.lineWidth = 3;
+    ctx.setLineDash([6, 6]);
+
+    ctx.beginPath();
+    ctx.moveTo(simX, simY);
+
+    for (let step = 0; step < 30; step++) {
+      simX += vx * 1.2;
+      simY += vy * 1.2;
+      vy += 0.45 * 1.2;
+
+      ctx.lineTo(simX, simY);
+      if (simY >= COURT.floorY || simX >= canvas.width) break;
+    }
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawBallTrail() {
+    if (!ball.inAir || ball.trail.length < 2) return;
+
+    ctx.save();
+    for (let i = 0; i < ball.trail.length - 1; i++) {
+      const pt1 = ball.trail[i];
+      const pt2 = ball.trail[i + 1];
+      const alpha = (i / ball.trail.length) * 0.4;
+
+      ctx.strokeStyle = `rgba(255, 107, 0, ${alpha})`;
+      ctx.lineWidth = ball.radius * (i / ball.trail.length);
+      ctx.beginPath();
+      ctx.moveTo(pt1.x, pt1.y);
+      ctx.lineTo(pt2.x, pt2.y);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawBasketball() {
+    ctx.save();
+    ctx.translate(ball.x, ball.y);
+    ctx.rotate(ball.rotation);
+
+    // Ball Base Shadow / Glow
+    if (ball.scored) {
+      ctx.shadowColor = '#00e676';
+      ctx.shadowBlur = 20;
+    }
+
+    // Ball Sphere Gradient
+    const ballGrad = ctx.createRadialGradient(
+      -ball.radius * 0.3,
+      -ball.radius * 0.3,
+      ball.radius * 0.1,
+      0,
+      0,
+      ball.radius
+    );
+    ballGrad.addColorStop(0, '#ff8800');
+    ballGrad.addColorStop(0.7, '#d84315');
+    ballGrad.addColorStop(1, '#8e24aa');
+
+    ctx.fillStyle = ballGrad;
+    ctx.beginPath();
+    ctx.arc(0, 0, ball.radius, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Black Seams on Basketball
+    ctx.strokeStyle = '#1a0d00';
+    ctx.lineWidth = 1.8;
+
+    // Cross Seam
+    ctx.beginPath();
+    ctx.moveTo(-ball.radius, 0);
+    ctx.lineTo(ball.radius, 0);
+    ctx.moveTo(0, -ball.radius);
+    ctx.lineTo(0, ball.radius);
+    ctx.stroke();
+
+    // Curved Rib Seams
+    ctx.beginPath();
+    ctx.arc(-ball.radius * 0.5, 0, ball.radius * 0.7, -Math.PI * 0.4, Math.PI * 0.4);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(ball.radius * 0.5, 0, ball.radius * 0.7, Math.PI * 0.6, Math.PI * 1.4);
+    ctx.stroke();
+
+    ctx.restore();
+  }
+
+  function drawParticles() {
+    for (let p of particles) {
+      ctx.save();
+      ctx.globalAlpha = p.life;
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  function drawAimGuideHud() {
+    if (ball.inAir) return;
+    const spot = SPOTS[state.currentSpotKey];
+
+    // Draw Angle Pointer Line at shooter spot
+    const rad = (state.angle * Math.PI) / 180;
+    const lineLen = 45;
+    const endX = spot.x + lineLen * Math.cos(rad);
+    const endY = (COURT.floorY - 30) - lineLen * Math.sin(rad);
+
+    ctx.save();
+    ctx.strokeStyle = 'var(--accent-cyan)';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(spot.x, COURT.floorY - 30);
+    ctx.lineTo(endX, endY);
+    ctx.stroke();
+
+    // Angle text floating near shooter
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '700 13px Orbitron, sans-serif';
+    ctx.fillText(`${state.angle}°`, spot.x - 15, COURT.floorY - 85);
+    ctx.restore();
+  }
+
+  // --- Main Animation Loop ---
+  function gameLoop() {
+    updatePhysics();
+    draw();
+    requestAnimationFrame(gameLoop);
+  }
+
+  // --- Event Listeners & Keyboard Bindings ---
+  function setupEvents() {
+    // Keyboard keydown
+    window.addEventListener('keydown', (e) => {
+      if (e.repeat && e.code !== 'ArrowUp' && e.code !== 'ArrowDown') return;
+
+      switch (e.code) {
+        case 'Space':
+        case 'Enter':
+          e.preventDefault();
+          startCharging();
+          break;
+        case 'Digit1':
+        case 'Key1':
+        case 'Numpad1':
+          setSpot('2pt');
+          break;
+        case 'Digit2':
+        case 'Key2':
+        case 'Numpad2':
+          setSpot('3pt');
+          break;
+        case 'ArrowLeft':
+        case 'ArrowRight':
+          toggleSpot();
+          break;
+        case 'ArrowUp':
+          setAngle(1);
+          break;
+        case 'ArrowDown':
+          setAngle(-1);
+          break;
+        case 'KeyR':
+          resetBall();
+          break;
+      }
+    });
+
+    // Keyboard keyup
+    window.addEventListener('keyup', (e) => {
+      if (e.code === 'Space' || e.code === 'Enter') {
+        e.preventDefault();
+        releaseShot();
+      }
+    });
+
+    // On-screen Button Listeners
+    if (btnToggleSpot) {
+      btnToggleSpot.addEventListener('click', toggleSpot);
+    }
+
+    if (btnAngleUp) {
+      btnAngleUp.addEventListener('click', () => setAngle(2));
+    }
+
+    if (btnAngleDown) {
+      btnAngleDown.addEventListener('click', () => setAngle(-2));
+    }
+
+    if (btnShoot) {
+      btnShoot.addEventListener('mousedown', startCharging);
+      btnShoot.addEventListener('mouseup', releaseShot);
+      btnShoot.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        startCharging();
+      });
+      btnShoot.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        releaseShot();
+      });
+    }
+
+    // Sound toggle
+    if (soundToggleBtn) {
+      soundToggleBtn.addEventListener('click', () => {
+        soundEnabled = !soundEnabled;
+        soundIcon.textContent = soundEnabled ? '🔊' : '🔇';
+        soundToggleBtn.classList.toggle('off', !soundEnabled);
+        soundToggleBtn.innerHTML = soundEnabled ? '<span id="sound-icon">🔊</span> Sound ON' : '<span id="sound-icon">🔇</span> Sound OFF';
+      });
+    }
+  }
+
+  // Initial setup call
+  setupEvents();
+  updateScoreboardUI();
+  resetBall();
+  requestAnimationFrame(gameLoop);
+
+})();

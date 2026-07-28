@@ -1,0 +1,477 @@
+/* Base reset & Variables */
+:root {
+  --bg-dark: #0b0d17;
+  --bg-card: rgba(22, 27, 46, 0.75);
+  --border-color: rgba(255, 255, 255, 0.12);
+  --accent-orange: #ff6b00;
+  --accent-orange-glow: rgba(255, 107, 0, 0.4);
+  --accent-gold: #ffbd00;
+  --accent-cyan: #00e5ff;
+  --accent-green: #00e676;
+  --text-main: #f0f4f8;
+  --text-muted: #8a99ad;
+  --radius-lg: 16px;
+  --radius-md: 10px;
+  --radius-sm: 6px;
+  --font-main: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-arcade: 'Orbitron', monospace;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-dark);
+  background-image: 
+    radial-gradient(circle at 50% 10%, rgba(255, 107, 0, 0.12) 0%, transparent 60%),
+    radial-gradient(circle at 80% 80%, rgba(0, 229, 255, 0.08) 0%, transparent 50%);
+  color: var(--text-main);
+  font-family: var(--font-main);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  overflow-x: hidden;
+}
+
+.app-container {
+  width: 100%;
+  max-width: 1100px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Scoreboard Header */
+.scoreboard {
+  background: var(--bg-card);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 16px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand .icon {
+  font-size: 2rem;
+  filter: drop-shadow(0 0 10px var(--accent-orange-glow));
+}
+
+.brand h1 {
+  font-family: var(--font-arcade);
+  font-size: 1.6rem;
+  font-weight: 900;
+  letter-spacing: 2px;
+  background: linear-gradient(135deg, #fff 0%, var(--accent-orange) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.stats-grid {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.stat-card {
+  background: rgba(10, 13, 24, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-md);
+  padding: 8px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 100px;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.stat-card:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+.stat-card.score-card {
+  border-color: var(--accent-orange-glow);
+  background: rgba(255, 107, 0, 0.08);
+}
+
+.stat-card .label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+
+.stat-card .value {
+  font-family: var(--font-arcade);
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #fff;
+}
+
+.stat-card.score-card .value {
+  color: var(--accent-orange);
+  text-shadow: 0 0 12px var(--accent-orange-glow);
+}
+
+.streak-card.hot {
+  border-color: rgba(255, 189, 0, 0.5);
+  background: rgba(255, 189, 0, 0.12);
+  animation: pulse-glow 1.5s infinite alternate;
+}
+
+@keyframes pulse-glow {
+  0% { box-shadow: 0 0 5px rgba(255, 189, 0, 0.2); }
+  100% { box-shadow: 0 0 20px rgba(255, 189, 0, 0.6); }
+}
+
+/* Main Game Layout */
+.game-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Canvas Wrapper */
+.canvas-container {
+  position: relative;
+  width: 100%;
+  background: #080a12;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+  aspect-ratio: 1000 / 560;
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Shot Badge Indicator */
+.shot-indicator-badge {
+  position: absolute;
+  top: 16px;
+  left: 20px;
+  background: rgba(15, 19, 32, 0.85);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 30px;
+  padding: 8px 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  letter-spacing: 1px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+
+.shot-indicator-badge .points-tag {
+  background: var(--accent-orange);
+  color: #fff;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-family: var(--font-arcade);
+  font-size: 0.8rem;
+}
+
+/* Power Meter Overlay */
+.power-meter-wrapper {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15, 19, 32, 0.85);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: var(--radius-md);
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 320px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  opacity: 0.9;
+  transition: opacity 0.2s;
+}
+
+.power-meter-wrapper.charging {
+  opacity: 1;
+  border-color: var(--accent-orange);
+  box-shadow: 0 0 20px var(--accent-orange-glow);
+}
+
+.power-label {
+  font-family: var(--font-arcade);
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--text-muted);
+  letter-spacing: 1.5px;
+}
+
+.power-meter-track {
+  flex: 1;
+  height: 14px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.power-meter-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #00e676 0%, #ffbd00 60%, #ff1744 100%);
+  border-radius: 10px;
+  transition: width 0.05s linear;
+}
+
+/* Shot Result Banner */
+.shot-result-banner {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.7);
+  background: rgba(10, 14, 26, 0.92);
+  backdrop-filter: blur(12px);
+  border: 2px solid var(--accent-green);
+  border-radius: var(--radius-lg);
+  padding: 16px 36px;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7);
+}
+
+.shot-result-banner.show {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.shot-result-banner.swish {
+  border-color: var(--accent-green);
+  box-shadow: 0 0 30px rgba(0, 230, 118, 0.5);
+}
+
+.shot-result-banner.miss {
+  border-color: #ff1744;
+  box-shadow: 0 0 30px rgba(255, 23, 68, 0.4);
+}
+
+.shot-result-banner .result-text {
+  font-family: var(--font-arcade);
+  font-size: 1.8rem;
+  font-weight: 900;
+  letter-spacing: 2px;
+  color: #fff;
+  text-align: center;
+  display: block;
+}
+
+/* Controls Panel */
+.controls-panel {
+  background: var(--bg-card);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 20px 24px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.panel-header h2 {
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  color: var(--text-muted);
+}
+
+.sound-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-family: var(--font-main);
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sound-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.keys-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.key-card {
+  background: rgba(10, 13, 24, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.key-cap {
+  background: #1e2438;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-bottom: 3px solid rgba(0, 0, 0, 0.5);
+  border-radius: var(--radius-sm);
+  padding: 6px 12px;
+  font-family: var(--font-arcade);
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--accent-cyan);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+  white-space: nowrap;
+}
+
+.key-cap.space {
+  padding: 6px 16px;
+  color: var(--accent-orange);
+}
+
+.key-caps-inline {
+  display: flex;
+  gap: 4px;
+}
+
+.key-desc {
+  display: flex;
+  flex-direction: column;
+}
+
+.key-desc strong {
+  font-size: 0.9rem;
+  color: var(--text-main);
+}
+
+.key-desc span {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* On-Screen Interactive Buttons (Touch & Fallback) */
+.screen-controls {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.action-btn {
+  background: #1a2035;
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  padding: 10px 18px;
+  border-radius: var(--radius-md);
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.action-btn:hover {
+  background: #242c48;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.action-btn:active {
+  transform: translateY(1px);
+}
+
+.action-btn.shoot-btn {
+  background: linear-gradient(135deg, var(--accent-orange) 0%, #e65100 100%);
+  border: none;
+  color: #fff;
+  font-family: var(--font-arcade);
+  padding: 12px 24px;
+  box-shadow: 0 4px 15px var(--accent-orange-glow);
+}
+
+.action-btn.shoot-btn:active, .action-btn.shoot-btn.active {
+  background: #ff8c00;
+  box-shadow: 0 0 25px var(--accent-orange);
+  transform: scale(0.98);
+}
+
+.angle-btn {
+  padding: 8px 14px;
+}
+
+.angle-readout {
+  font-family: var(--font-arcade);
+  font-weight: 800;
+  color: var(--accent-cyan);
+  background: rgba(0, 0, 0, 0.4);
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(0, 229, 255, 0.3);
+}
+
+/* Footer */
+.game-footer {
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  padding-bottom: 10px;
+}
+
+/* Responsive adjust */
+@media (max-width: 768px) {
+  .scoreboard {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .stats-grid {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .stat-card {
+    min-width: 70px;
+    padding: 6px 10px;
+  }
+  .power-meter-wrapper {
+    width: 80%;
+  }
+}
