@@ -1,7 +1,7 @@
 /**
  * Basketbola - Web & Mobile Basketball Arcade Game Engine
- * Features: 2PT & 3PT Shooting Spots, Canvas Physics, Touch & Haptic Controls,
- * Singapore MUIS Prayer Times, Hijri Calendar, Scoreboard, Streaks, Web Audio.
+ * Features: Endless Mode vs 60s Time Attack Challenge, 2PT & 3PT Shooting Spots,
+ * Touch & Haptic Controls, Singapore MUIS Prayer Times, Hijri Calendar, Web Audio.
  */
 
 (function () {
@@ -28,6 +28,21 @@
   const angleDisplay = document.getElementById('angle-display');
   const soundToggleBtn = document.getElementById('sound-toggle-btn');
   const soundIcon = document.getElementById('sound-icon');
+
+  // Mode Selector DOM
+  const modeEndlessBtn = document.getElementById('mode-endless-btn');
+  const modeTimerBtn = document.getElementById('mode-timer-btn');
+  const timerStatCard = document.getElementById('timer-stat-card');
+  const timerDisplay = document.getElementById('timer-display');
+
+  // Modal DOM
+  const gameOverModal = document.getElementById('game-over-modal');
+  const modalScore = document.getElementById('modal-score');
+  const modalAccuracy = document.getElementById('modal-accuracy');
+  const modalShots = document.getElementById('modal-shots');
+  const modalStreak = document.getElementById('modal-streak');
+  const newRecordBadge = document.getElementById('new-record-badge');
+  const modalRestartBtn = document.getElementById('modal-restart-btn');
 
   // Prayer & Hijri DOM Elements
   const hijriDateText = document.getElementById('hijri-date-text');
@@ -206,6 +221,31 @@
     }
   }
 
+  function playBuzzerSound() {
+    if (!soundEnabled) return;
+    initAudio();
+    if (!audioCtx) return;
+
+    try {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(160, audioCtx.currentTime);
+
+      gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.8);
+
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.8);
+    } catch (e) {
+      console.warn("Audio error:", e);
+    }
+  }
+
   // --- Singapore MUIS Prayer Times & Hijri Calendar Engine ---
   let prayerTimesData = {
     Fajr: "05:40",
@@ -226,7 +266,6 @@
   };
 
   function fetchSingaporePrayerTimes() {
-    // Aladhan API Method 11 is Majlis Ugama Islam Singapura (MUIS)
     fetch('https://api.aladhan.com/v1/timingsByCity?city=Singapore&country=Singapore&method=11')
       .then(res => res.json())
       .then(data => {
@@ -239,7 +278,6 @@
           prayerTimesData.Maghrib = cleanTimeString(timings.Maghrib);
           prayerTimesData.Isha = cleanTimeString(timings.Isha);
 
-          // Update Hijri Date
           const hijri = data.data.date.hijri;
           if (hijri) {
             hijriDateText.textContent = `${hijri.day} ${hijri.month.en} ${hijri.year} AH`;
@@ -256,7 +294,7 @@
 
   function cleanTimeString(t) {
     if (!t) return "00:00";
-    return t.split(' ')[0]; // removes trailing (SGT) timezone text if present
+    return t.split(' ')[0];
   }
 
   function fallbackHijriDate() {
@@ -302,21 +340,18 @@
       }
     }
 
-    // If all prayers today have passed, next prayer is Fajr tomorrow
     if (!nextPrayerKey) {
       nextPrayerKey = 'Fajr';
       const [h, m] = prayerTimesData['Fajr'].split(':').map(Number);
       nextPrayerTargetTime = new Date(currentYear, currentMonth, currentDate + 1, h, m, 0);
     }
 
-    // Highlight active chip
     for (let key in prayerChips) {
       if (prayerChips[key]) {
         prayerChips[key].classList.toggle('next-prayer', key === nextPrayerKey);
       }
     }
 
-    // Update countdown timer
     if (nextPrayerTargetTime && nextPrayerNameEl && nextPrayerTimerEl) {
       nextPrayerNameEl.textContent = PRAYER_LABELS[nextPrayerKey] || nextPrayerKey;
       const diffMs = nextPrayerTargetTime - now;
@@ -352,16 +387,18 @@
     backboardY2: 290,
   };
 
-  // Shooting Locations
   const SPOTS = {
     '3pt': { x: 160, label: '3-POINTER SPOT', points: 3, nextLabel: 'Switch to 2PT' },
     '2pt': { x: 420, label: '2-POINTER SPOT', points: 2, nextLabel: 'Switch to 3PT' }
   };
 
   let state = {
+    gameMode: 'endless', // 'endless' or 'timer'
     score: 0,
-    highScore: parseInt(localStorage.getItem('basketbola_highscore') || '0', 10),
+    highScoreEndless: parseInt(localStorage.getItem('basketbola_highscore_endless') || '0', 10),
+    highScoreTimer: parseInt(localStorage.getItem('basketbola_highscore_timer') || '0', 10),
     streak: 0,
+    bestStreakSession: 0,
     shotsTaken: 0,
     shotsMade: 0,
     currentSpotKey: '3pt',
@@ -372,7 +409,12 @@
     soundOn: true,
     bannerTimeout: null,
     netSwishTimer: 0,
-    touchStartY: 0
+    touchStartY: 0,
+    // Time Attack Timer State
+    timerSeconds: 60,
+    timerActive: false,
+    timerInterval: null,
+    isGameOver: false
   };
 
   // Ball Object
@@ -391,11 +433,9 @@
     trail: []
   };
 
-  // Rim Points for Collision
   const rimFront = { x: COURT.hoopX - COURT.rimWidth, y: COURT.hoopY };
   const rimBack = { x: COURT.hoopX, y: COURT.hoopY };
 
-  // Particle System
   let particles = [];
 
   function createSwishParticles(x, y) {
@@ -430,7 +470,87 @@
     }
   }
 
-  // --- Reset & Position Handlers ---
+  // --- Mode Switching & Reset Handlers ---
+  function setGameMode(mode) {
+    state.gameMode = mode;
+    modeEndlessBtn.classList.toggle('active', mode === 'endless');
+    modeTimerBtn.classList.toggle('active', mode === 'timer');
+    timerStatCard.style.display = mode === 'timer' ? 'flex' : 'none';
+
+    stopTimer();
+    restartGame();
+  }
+
+  function restartGame() {
+    state.score = 0;
+    state.streak = 0;
+    state.bestStreakSession = 0;
+    state.shotsTaken = 0;
+    state.shotsMade = 0;
+    state.timerSeconds = 60;
+    state.timerActive = false;
+    state.isGameOver = false;
+
+    stopTimer();
+    timerDisplay.textContent = '60s';
+    timerStatCard.classList.remove('timer-warning');
+    if (gameOverModal) gameOverModal.classList.remove('active');
+
+    updateScoreboardUI();
+    resetBall();
+  }
+
+  function startTimer() {
+    if (state.timerActive || state.gameMode !== 'timer') return;
+    state.timerActive = true;
+
+    state.timerInterval = setInterval(() => {
+      state.timerSeconds--;
+      timerDisplay.textContent = `${state.timerSeconds}s`;
+
+      if (state.timerSeconds <= 10) {
+        timerStatCard.classList.add('timer-warning');
+      }
+
+      if (state.timerSeconds <= 0) {
+        endTimerChallenge();
+      }
+    }, 1000);
+  }
+
+  function stopTimer() {
+    if (state.timerInterval) {
+      clearInterval(state.timerInterval);
+      state.timerInterval = null;
+    }
+    state.timerActive = false;
+  }
+
+  function endTimerChallenge() {
+    stopTimer();
+    state.isGameOver = true;
+    playBuzzerSound();
+    triggerHaptic(100);
+
+    const isNewRecord = state.score > state.highScoreTimer && state.score > 0;
+    if (isNewRecord) {
+      state.highScoreTimer = state.score;
+      localStorage.setItem('basketbola_highscore_timer', state.score.toString());
+    }
+
+    // Populate Modal
+    modalScore.textContent = state.score;
+    const pct = state.shotsTaken > 0 ? Math.round((state.shotsMade / state.shotsTaken) * 100) : 0;
+    modalAccuracy.textContent = `${pct}%`;
+    modalShots.textContent = `${state.shotsMade}/${state.shotsTaken}`;
+    modalStreak.textContent = `${state.bestStreakSession} 🔥`;
+
+    if (newRecordBadge) newRecordBadge.style.display = isNewRecord ? 'block' : 'none';
+    if (gameOverModal) gameOverModal.classList.add('active');
+
+    updateScoreboardUI();
+  }
+
   function resetBall() {
     const spot = SPOTS[state.currentSpotKey];
     ball.x = spot.x;
@@ -450,7 +570,7 @@
   }
 
   function setSpot(spotKey) {
-    if (ball.inAir) return;
+    if (ball.inAir || state.isGameOver) return;
     state.currentSpotKey = spotKey;
     const spot = SPOTS[spotKey];
     
@@ -474,7 +594,7 @@
   }
 
   function setAngle(delta) {
-    if (ball.inAir) return;
+    if (ball.inAir || state.isGameOver) return;
     state.angle = Math.max(30, Math.min(80, state.angle + delta));
     angleDisplay.textContent = `${state.angle}°`;
     triggerHaptic(10);
@@ -482,7 +602,7 @@
 
   // --- Shooting Mechanics ---
   function startCharging() {
-    if (ball.inAir || state.isCharging) return;
+    if (ball.inAir || state.isCharging || state.isGameOver) return;
     initAudio();
     triggerHaptic(20);
     state.isCharging = true;
@@ -490,10 +610,15 @@
     state.powerDirection = 1.6;
     powerMeterWrapper.classList.add('charging');
     if (btnShoot) btnShoot.classList.add('active');
+
+    // Start timer on first shot charge in time attack mode!
+    if (state.gameMode === 'timer' && !state.timerActive) {
+      startTimer();
+    }
   }
 
   function releaseShot() {
-    if (!state.isCharging || ball.inAir) return;
+    if (!state.isCharging || ball.inAir || state.isGameOver) return;
 
     state.isCharging = false;
     powerMeterWrapper.classList.remove('charging');
@@ -647,9 +772,21 @@
     state.score += pts;
     state.shotsMade++;
     state.streak++;
-    if (state.score > state.highScore) {
-      state.highScore = state.score;
-      localStorage.setItem('basketbola_highscore', state.highScore.toString());
+    if (state.streak > state.bestStreakSession) {
+      state.bestStreakSession = state.streak;
+    }
+
+    // High Score tracking per mode
+    if (state.gameMode === 'endless') {
+      if (state.score > state.highScoreEndless) {
+        state.highScoreEndless = state.score;
+        localStorage.setItem('basketbola_highscore_endless', state.score.toString());
+      }
+    } else {
+      if (state.score > state.highScoreTimer) {
+        state.highScoreTimer = state.score;
+        localStorage.setItem('basketbola_highscore_timer', state.score.toString());
+      }
     }
 
     state.netSwishTimer = 25;
@@ -700,7 +837,9 @@
 
   function updateScoreboardUI() {
     scoreDisplay.textContent = state.score;
-    highScoreDisplay.textContent = state.highScore;
+
+    const currentHighScore = state.gameMode === 'endless' ? state.highScoreEndless : state.highScoreTimer;
+    highScoreDisplay.textContent = currentHighScore;
 
     if (state.streak >= 3) {
       streakDisplay.textContent = `${state.streak} 🔥`;
@@ -873,7 +1012,7 @@
   }
 
   function drawTrajectoryPreview() {
-    if (ball.inAir) return;
+    if (ball.inAir || state.isGameOver) return;
 
     const spot = SPOTS[state.currentSpotKey];
     const previewPower = state.isCharging ? state.power : 50;
@@ -990,7 +1129,7 @@
   }
 
   function drawAimGuideHud() {
-    if (ball.inAir) return;
+    if (ball.inAir || state.isGameOver) return;
     const spot = SPOTS[state.currentSpotKey];
 
     const rad = (state.angle * Math.PI) / 180;
@@ -1021,6 +1160,19 @@
 
   // --- Event Listeners & Keyboard / Touch Bindings ---
   function setupEvents() {
+    // Mode Switcher Listeners
+    if (modeEndlessBtn) {
+      modeEndlessBtn.addEventListener('click', () => setGameMode('endless'));
+    }
+    if (modeTimerBtn) {
+      modeTimerBtn.addEventListener('click', () => setGameMode('timer'));
+    }
+
+    // Modal Restart Button
+    if (modalRestartBtn) {
+      modalRestartBtn.addEventListener('click', restartGame);
+    }
+
     // Keyboard keydown
     window.addEventListener('keydown', (e) => {
       if (e.repeat && e.code !== 'ArrowUp' && e.code !== 'ArrowDown') return;
@@ -1052,7 +1204,7 @@
           setAngle(-1);
           break;
         case 'KeyR':
-          resetBall();
+          restartGame();
           break;
       }
     });

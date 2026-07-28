@@ -61,11 +61,21 @@
       </div>
     </aside>
 
-    <!-- Header / Scoreboard -->
+    <!-- Header / Scoreboard & Mode Switcher -->
     <header class="scoreboard">
       <div class="brand">
         <span class="icon">🏀</span>
         <h1>BASKETBOLA</h1>
+      </div>
+
+      <!-- Mode Selector Pills -->
+      <div class="mode-selector">
+        <button class="mode-btn active" id="mode-endless-btn" title="Practice without timer">
+          <span>♾️</span> Endless
+        </button>
+        <button class="mode-btn" id="mode-timer-btn" title="60 seconds rapid fire challenge">
+          <span>⏱️</span> 60s Time Attack
+        </button>
       </div>
 
       <div class="stats-grid">
@@ -74,7 +84,12 @@
           <span class="value" id="score-display">0</span>
         </div>
         
-        <div class="stat-card">
+        <div class="stat-card" id="timer-stat-card" style="display: none;">
+          <span class="label">TIME LEFT</span>
+          <span class="value timer-value" id="timer-display">60s</span>
+        </div>
+
+        <div class="stat-card" id="high-score-card">
           <span class="label">HIGH SCORE</span>
           <span class="value" id="high-score-display">0</span>
         </div>
@@ -114,6 +129,41 @@
         <!-- Shot Result Notification Banner -->
         <div class="shot-result-banner" id="shot-result-banner">
           <span class="result-text" id="result-text">SWISH! +3</span>
+        </div>
+
+        <!-- Game Over Modal Overlay -->
+        <div class="modal-overlay" id="game-over-modal">
+          <div class="modal-card">
+            <div class="modal-header">
+              <h2>TIME'S UP! ⏱️</h2>
+              <p>60-Second Challenge Complete</p>
+            </div>
+            
+            <div class="modal-stats">
+              <div class="m-stat">
+                <span class="m-label">FINAL SCORE</span>
+                <span class="m-val highlight" id="modal-score">0</span>
+              </div>
+              <div class="m-stat">
+                <span class="m-label">ACCURACY</span>
+                <span class="m-val" id="modal-accuracy">0%</span>
+              </div>
+              <div class="m-stat">
+                <span class="m-label">SHOTS MADE</span>
+                <span class="m-val" id="modal-shots">0/0</span>
+              </div>
+              <div class="m-stat">
+                <span class="m-label">BEST STREAK</span>
+                <span class="m-val" id="modal-streak">0 🔥</span>
+              </div>
+            </div>
+
+            <div class="modal-record-badge" id="new-record-badge" style="display: none;">
+              🎉 NEW HIGH SCORE RECORD! 🎉
+            </div>
+
+            <button class="modal-btn" id="modal-restart-btn">PLAY AGAIN 🏀</button>
+          </div>
         </div>
       </div>
 
