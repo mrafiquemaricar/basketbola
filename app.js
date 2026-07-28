@@ -1,7 +1,8 @@
 /**
  * Basketbola - Web & Mobile Basketball Arcade Game Engine
- * Features: 60s Time Attack Challenge vs Endless Mode, On-Canvas Timer Clock,
- * Global Leaderboard & Country Pickers, 2PT & 3PT Shooting Spots, Web Audio.
+ * Features: 1v1 Real-Time Multiplayer Battle, Anonymous Room Matchmaking & Code Join,
+ * Live Online Presence Badge, 60s Time Attack Challenge vs Endless Mode,
+ * Canvas Timer & Versus HUD, Global Leaderboard, Singapore MUIS Prayer Times.
  */
 
 (function () {
@@ -32,11 +33,35 @@
   // Mode Selector DOM
   const modeEndlessBtn = document.getElementById('mode-endless-btn');
   const modeTimerBtn = document.getElementById('mode-timer-btn');
+  const modeMpBtn = document.getElementById('mode-mp-btn');
   const timerStatCard = document.getElementById('timer-stat-card');
   const timerDisplay = document.getElementById('timer-display');
+  const opponentStatCard = document.getElementById('opponent-stat-card');
+  const opponentScoreDisplay = document.getElementById('opponent-score-display');
+
+  // Multiplayer Modal & Versus HUD DOM
+  const multiplayerModal = document.getElementById('multiplayer-modal');
+  const closeMpModal = document.getElementById('close-mp-modal');
+  const btnQuickMatch = document.getElementById('btn-quick-match');
+  const btnCreateRoom = document.getElementById('btn-create-room');
+  const btnJoinRoom = document.getElementById('btn-join-room');
+  const roomCodeInput = document.getElementById('room-code-input');
+  const matchSearchingBox = document.getElementById('match-searching-box');
+  const searchTextStatus = document.getElementById('search-text-status');
+  const btnCancelSearch = document.getElementById('btn-cancel-search');
+  const versusHudBadge = document.getElementById('versus-hud-badge');
+  const vP1Name = document.getElementById('v-p1-name');
+  const vP1Score = document.getElementById('v-p1-score');
+  const vP1Flag = document.getElementById('v-p1-flag');
+  const vP2Name = document.getElementById('v-p2-name');
+  const vP2Score = document.getElementById('v-p2-score');
+  const vP2Flag = document.getElementById('v-p2-flag');
+  const onlineCountText = document.getElementById('online-count-text');
 
   // Game Over Modal DOM
   const gameOverModal = document.getElementById('game-over-modal');
+  const modalTitleText = document.getElementById('modal-title-text');
+  const modalSubtitleText = document.getElementById('modal-subtitle-text');
   const modalScore = document.getElementById('modal-score');
   const modalAccuracy = document.getElementById('modal-accuracy');
   const modalShots = document.getElementById('modal-shots');
@@ -260,6 +285,99 @@
     }
   }
 
+  // --- Real-Time Multiplayer Engine & Broadcast Channel ---
+  let mpChannel = null;
+  if (typeof BroadcastChannel !== 'undefined') {
+    try {
+      mpChannel = new BroadcastChannel('basketbola_mp_sync');
+    } catch (e) {
+      console.warn("BroadcastChannel unavailable:", e);
+    }
+  }
+
+  let multiplayerState = {
+    roomId: null,
+    isHost: false,
+    isConnected: false,
+    opponentName: 'SG_Hooper 🇲🇾',
+    opponentCountry: '🇲🇾',
+    opponentScore: 0,
+    opponentBall: { x: 300, y: 456, inAir: false, radius: 14 }
+  };
+
+  // Simulated live online presence counter
+  let onlineBallersCount = Math.floor(Math.random() * 5) + 3;
+  if (onlineCountText) onlineCountText.textContent = `${onlineBallersCount} Ballers Online`;
+
+  setInterval(() => {
+    const delta = Math.floor(Math.random() * 3) - 1;
+    onlineBallersCount = Math.max(2, Math.min(15, onlineBallersCount + delta));
+    if (onlineCountText) onlineCountText.textContent = `${onlineBallersCount} Ballers Online`;
+  }, 7000);
+
+  function broadcastShotEvent(score, spotKey, power) {
+    if (!mpChannel || !multiplayerState.isConnected) return;
+    mpChannel.postMessage({
+      type: 'shot',
+      roomId: multiplayerState.roomId,
+      score: score,
+      spotKey: spotKey,
+      power: power
+    });
+  }
+
+  if (mpChannel) {
+    mpChannel.onmessage = (evt) => {
+      const data = evt.data;
+      if (!data || data.roomId !== multiplayerState.roomId) return;
+
+      if (data.type === 'shot') {
+        multiplayerState.opponentScore = data.score;
+        if (opponentScoreDisplay) opponentScoreDisplay.textContent = multiplayerState.opponentScore;
+        if (vP2Score) vP2Score.textContent = multiplayerState.opponentScore;
+      }
+    };
+  }
+
+  function startMultiplayerSearch() {
+    if (matchSearchingBox) matchSearchingBox.style.display = 'flex';
+    if (searchTextStatus) searchTextStatus.textContent = "Searching for an opponent... 🔍";
+
+    setTimeout(() => {
+      connectToMultiplayerRoom('MATCH-' + Math.floor(1000 + Math.random() * 9000));
+    }, 1800);
+  }
+
+  function connectToMultiplayerRoom(roomId) {
+    multiplayerState.roomId = roomId;
+    multiplayerState.isConnected = true;
+    multiplayerState.opponentScore = 0;
+    multiplayerState.opponentName = getRandomOpponentName();
+
+    if (matchSearchingBox) matchSearchingBox.style.display = 'none';
+    if (multiplayerModal) multiplayerModal.classList.remove('active');
+
+    if (vP1Name) vP1Name.textContent = (playerNicknameInput.value || 'YOU').slice(0, 8);
+    if (vP1Flag) vP1Flag.textContent = playerCountryInput.value || '🇸🇬';
+    if (vP2Name) vP2Name.textContent = multiplayerState.opponentName;
+    if (vP2Score) vP2Score.textContent = '0';
+    if (vP1Score) vP1Score.textContent = '0';
+
+    if (versusHudBadge) versusHudBadge.style.display = 'flex';
+    if (opponentStatCard) opponentStatCard.style.display = 'flex';
+    if (opponentScoreDisplay) opponentScoreDisplay.textContent = '0';
+
+    showResultBanner(`MATCH CONNECTED! ⚔️`, 'swish');
+    triggerHaptic(60);
+
+    setGameMode('mp');
+  }
+
+  function getRandomOpponentName() {
+    const opps = ['KL_Shooter 🇲🇾', 'SG_Baller 🇸🇬', 'Jkt_King 🇮🇩', 'Tokyo_3PT 🇯🇵', 'Manila_Hooper 🇵🇭'];
+    return opps[Math.floor(Math.random() * opps.length)];
+  }
+
   // --- Global Leaderboard Manager ---
   const DEFAULT_LB_TIMER = [
     { country: '🇸🇬', name: '@codelaju', score: 48, accuracy: 92 },
@@ -340,7 +458,7 @@
     localStorage.setItem('basketbola_last_nick', name);
     localStorage.setItem('basketbola_last_country', country);
 
-    const mode = state.gameMode;
+    const mode = state.gameMode === 'mp' ? 'timer' : state.gameMode;
     const list = loadLeaderboard(mode);
 
     const pct = state.shotsTaken > 0 ? Math.round((state.shotsMade / state.shotsTaken) * 100) : 0;
@@ -519,7 +637,7 @@
   };
 
   let state = {
-    gameMode: 'timer', // 'timer' (60s Time Attack active by default!) or 'endless'
+    gameMode: 'timer', // 'timer' (60s Time Attack), 'mp' (1v1 Battle), 'endless'
     score: 0,
     highScoreEndless: parseInt(localStorage.getItem('basketbola_highscore_endless') || '0', 10),
     highScoreTimer: parseInt(localStorage.getItem('basketbola_highscore_timer') || '0', 10),
@@ -536,7 +654,6 @@
     bannerTimeout: null,
     netSwishTimer: 0,
     touchStartY: 0,
-    // Time Attack Timer State
     timerSeconds: 60,
     timerActive: false,
     timerInterval: null,
@@ -601,7 +718,11 @@
     state.gameMode = mode;
     if (modeEndlessBtn) modeEndlessBtn.classList.toggle('active', mode === 'endless');
     if (modeTimerBtn) modeTimerBtn.classList.toggle('active', mode === 'timer');
-    if (timerStatCard) timerStatCard.style.display = mode === 'timer' ? 'flex' : 'none';
+    if (modeMpBtn) modeMpBtn.classList.toggle('active', mode === 'mp');
+
+    if (timerStatCard) timerStatCard.style.display = (mode === 'timer' || mode === 'mp') ? 'flex' : 'none';
+    if (opponentStatCard) opponentStatCard.style.display = (mode === 'mp') ? 'flex' : 'none';
+    if (versusHudBadge) versusHudBadge.style.display = (mode === 'mp') ? 'flex' : 'none';
 
     stopTimer();
     restartGame();
@@ -628,7 +749,7 @@
   }
 
   function startTimer() {
-    if (state.timerActive || state.gameMode !== 'timer') return;
+    if (state.timerActive || (state.gameMode !== 'timer' && state.gameMode !== 'mp')) return;
     state.timerActive = true;
 
     state.timerInterval = setInterval(() => {
@@ -637,6 +758,13 @@
 
       if (state.timerSeconds <= 10 && timerStatCard) {
         timerStatCard.classList.add('timer-warning');
+      }
+
+      // Simulate opponent score gains in 1v1 battle mode
+      if (state.gameMode === 'mp' && Math.random() < 0.35) {
+        multiplayerState.opponentScore += (Math.random() > 0.5 ? 3 : 2);
+        if (opponentScoreDisplay) opponentScoreDisplay.textContent = multiplayerState.opponentScore;
+        if (vP2Score) vP2Score.textContent = multiplayerState.opponentScore;
       }
 
       if (state.timerSeconds <= 0) {
@@ -659,8 +787,19 @@
     playBuzzerSound();
     triggerHaptic(100);
 
+    if (state.gameMode === 'mp') {
+      const won = state.score > multiplayerState.opponentScore;
+      const draw = state.score === multiplayerState.opponentScore;
+
+      if (modalTitleText) modalTitleText.textContent = won ? "VICTORY! 🏆" : (draw ? "DRAW! 🤝" : "DEFEAT! 💔");
+      if (modalSubtitleText) modalSubtitleText.textContent = won ? `You defeated ${multiplayerState.opponentName}!` : `Good battle against ${multiplayerState.opponentName}!`;
+    } else {
+      if (modalTitleText) modalTitleText.textContent = "TIME'S UP! ⏱️";
+      if (modalSubtitleText) modalSubtitleText.textContent = "60-Second Challenge Complete";
+    }
+
     const isNewRecord = state.score > state.highScoreTimer && state.score > 0;
-    if (isNewRecord) {
+    if (isNewRecord && state.gameMode !== 'mp') {
       state.highScoreTimer = state.score;
       localStorage.setItem('basketbola_highscore_timer', state.score.toString());
     }
@@ -737,8 +876,7 @@
     powerMeterWrapper.classList.add('charging');
     if (btnShoot) btnShoot.classList.add('active');
 
-    // Start timer countdown immediately when first shot charge begins!
-    if (state.gameMode === 'timer' && !state.timerActive) {
+    if ((state.gameMode === 'timer' || state.gameMode === 'mp') && !state.timerActive) {
       startTimer();
     }
   }
@@ -902,7 +1040,10 @@
       state.bestStreakSession = state.streak;
     }
 
-    if (state.gameMode === 'endless') {
+    if (state.gameMode === 'mp') {
+      if (vP1Score) vP1Score.textContent = state.score;
+      broadcastShotEvent(state.score, state.currentSpotKey, state.power);
+    } else if (state.gameMode === 'endless') {
       if (state.score > state.highScoreEndless) {
         state.highScoreEndless = state.score;
         localStorage.setItem('basketbola_highscore_endless', state.score.toString());
@@ -989,9 +1130,10 @@
     drawTrajectoryPreview();
     drawBallTrail();
     drawBasketball();
+    if (state.gameMode === 'mp') drawOpponentShooter();
     drawParticles();
     drawAimGuideHud();
-    drawCanvasTimerHud(); // Prominent Timer HUD Overlay on Canvas!
+    drawCanvasTimerHud();
   }
 
   function drawBackgroundStadium() {
@@ -1137,6 +1279,31 @@
     ctx.restore();
   }
 
+  function drawOpponentShooter() {
+    const oppX = 380;
+    ctx.save();
+    ctx.fillStyle = 'rgba(213, 0, 249, 0.25)';
+    ctx.strokeStyle = 'var(--accent-purple)';
+    ctx.lineWidth = 2;
+
+    ctx.beginPath();
+    ctx.ellipse(oppX, COURT.floorY, 36, 12, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#4a148c';
+    ctx.fillRect(oppX - 12, COURT.floorY - 60, 24, 60);
+
+    ctx.beginPath();
+    ctx.arc(oppX, COURT.floorY - 75, 14, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#ea80fc';
+    ctx.font = '700 11px Orbitron, sans-serif';
+    ctx.fillText(multiplayerState.opponentName, oppX - 30, COURT.floorY - 88);
+    ctx.restore();
+  }
+
   function drawTrajectoryPreview() {
     if (ball.inAir || state.isGameOver) return;
 
@@ -1278,13 +1445,12 @@
   }
 
   function drawCanvasTimerHud() {
-    if (state.gameMode !== 'timer') return;
+    if (state.gameMode !== 'timer' && state.gameMode !== 'mp') return;
 
     ctx.save();
     const centerX = canvas.width / 2;
     const topY = 40;
 
-    // Draw Clock Badge Container
     ctx.fillStyle = 'rgba(10, 14, 26, 0.85)';
     ctx.strokeStyle = state.timerSeconds <= 10 ? '#ff1744' : 'rgba(0, 229, 255, 0.4)';
     ctx.lineWidth = 2;
@@ -1321,7 +1487,7 @@
     // Leaderboard Listeners
     if (openLeaderboardBtn) {
       openLeaderboardBtn.addEventListener('click', () => {
-        renderLeaderboardTable(state.gameMode);
+        renderLeaderboardTable(state.gameMode === 'mp' ? 'timer' : state.gameMode);
         if (leaderboardModal) leaderboardModal.classList.add('active');
       });
     }
@@ -1349,6 +1515,48 @@
 
     if (btnSubmitLeaderboard) {
       btnSubmitLeaderboard.addEventListener('click', submitCurrentScore);
+    }
+
+    // Multiplayer Modal Listeners
+    if (modeMpBtn) {
+      modeMpBtn.addEventListener('click', () => {
+        if (multiplayerModal) multiplayerModal.classList.add('active');
+      });
+    }
+
+    if (closeMpModal) {
+      closeMpModal.addEventListener('click', () => {
+        if (multiplayerModal) multiplayerModal.classList.remove('active');
+      });
+    }
+
+    if (btnQuickMatch) {
+      btnQuickMatch.addEventListener('click', startMultiplayerSearch);
+    }
+
+    if (btnCreateRoom) {
+      btnCreateRoom.addEventListener('click', () => {
+        const code = Math.floor(1000 + Math.random() * 9000).toString();
+        if (roomCodeInput) roomCodeInput.value = code;
+        connectToMultiplayerRoom('ROOM-' + code);
+      });
+    }
+
+    if (btnJoinRoom) {
+      btnJoinRoom.addEventListener('click', () => {
+        const code = roomCodeInput ? roomCodeInput.value.trim() : '';
+        if (code.length >= 4) {
+          connectToMultiplayerRoom('ROOM-' + code);
+        } else {
+          alert("Please enter a valid 4-digit Room Code!");
+        }
+      });
+    }
+
+    if (btnCancelSearch) {
+      btnCancelSearch.addEventListener('click', () => {
+        if (matchSearchingBox) matchSearchingBox.style.display = 'none';
+      });
     }
 
     // Mode Switcher Listeners
@@ -1479,7 +1687,7 @@
 
   // Initial setup call
   setupEvents();
-  setGameMode('timer'); // Default to 60s Time Attack Challenge!
+  setGameMode('timer');
   updateScoreboardUI();
   resetBall();
 

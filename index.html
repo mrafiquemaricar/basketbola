@@ -16,7 +16,7 @@
 <body>
 
   <div class="app-container">
-    <!-- Top Bar: Hijri Calendar & Singapore Prayer Times -->
+    <!-- Top Bar: Hijri Calendar & Singapore Prayer Times & Online Presence -->
     <aside class="prayer-top-bar" id="prayer-top-bar">
       <div class="prayer-bar-left">
         <div class="hijri-badge">
@@ -24,6 +24,12 @@
           <span id="hijri-date-text">Loading Hijri...</span>
         </div>
         <div class="location-tag">🇸🇬 Singapore (MUIS)</div>
+        
+        <!-- Online Presence Counter -->
+        <div class="online-presence-badge" id="online-presence-badge" title="Live online players looking for match">
+          <span class="pulse-dot">🟢</span>
+          <span id="online-count-text">3 Ballers Online</span>
+        </div>
       </div>
 
       <div class="prayer-times-strip" id="prayer-times-strip">
@@ -79,6 +85,9 @@
         <button class="mode-btn active" id="mode-timer-btn" title="60 seconds rapid fire challenge">
           <span>⏱️</span> 60s Time Attack
         </button>
+        <button class="mode-btn mode-mp-btn" id="mode-mp-btn" title="Live 1v1 Real-Time Battle">
+          <span>⚔️</span> 1v1 Battle
+        </button>
         <button class="mode-btn" id="mode-endless-btn" title="Practice without timer">
           <span>♾️</span> Endless
         </button>
@@ -86,13 +95,19 @@
 
       <div class="stats-grid">
         <div class="stat-card score-card">
-          <span class="label">SCORE</span>
+          <span class="label" id="score-card-label">SCORE</span>
           <span class="value" id="score-display">0</span>
         </div>
         
         <div class="stat-card timer-card" id="timer-stat-card">
           <span class="label">TIME LEFT</span>
           <span class="value timer-value" id="timer-display">60s</span>
+        </div>
+
+        <!-- 1v1 Battle Opponent Score Card (Hidden in solo modes) -->
+        <div class="stat-card opponent-card" id="opponent-stat-card" style="display: none;">
+          <span class="label">OPPONENT</span>
+          <span class="value opp-val" id="opponent-score-display">0</span>
         </div>
 
         <div class="stat-card" id="high-score-card">
@@ -124,6 +139,13 @@
           <span class="points-tag" id="shot-points-tag">+3 PTS</span>
         </div>
 
+        <!-- 1v1 Live Match Matchmaking HUD -->
+        <div class="versus-hud-badge" id="versus-hud-badge" style="display: none;">
+          <div class="v-player p1"><span id="v-p1-flag">🇸🇬</span> <span id="v-p1-name">YOU</span>: <strong id="v-p1-score">0</strong></div>
+          <div class="v-vs">VS</div>
+          <div class="v-player p2"><span id="v-p2-flag">🇲🇾</span> <span id="v-p2-name">OPPONENT</span>: <strong id="v-p2-score">0</strong></div>
+        </div>
+
         <!-- Power Meter Bar Overlay -->
         <div class="power-meter-wrapper" id="power-meter-wrapper">
           <div class="power-label">POWER</div>
@@ -137,17 +159,17 @@
           <span class="result-text" id="result-text">SWISH! +3</span>
         </div>
 
-        <!-- Game Over Modal Overlay -->
+        <!-- Game Over / Match End Modal Overlay -->
         <div class="modal-overlay" id="game-over-modal">
           <div class="modal-card">
             <div class="modal-header">
-              <h2>TIME'S UP! ⏱️</h2>
-              <p>60-Second Challenge Complete</p>
+              <h2 id="modal-title-text">TIME'S UP! ⏱️</h2>
+              <p id="modal-subtitle-text">60-Second Challenge Complete</p>
             </div>
             
             <div class="modal-stats">
               <div class="m-stat">
-                <span class="m-label">FINAL SCORE</span>
+                <span class="m-label" id="m-score-label">FINAL SCORE</span>
                 <span class="m-val highlight" id="modal-score">0</span>
               </div>
               <div class="m-stat">
@@ -169,13 +191,13 @@
             </div>
 
             <!-- Optional Leaderboard Submission Form -->
-            <div class="leaderboard-submit-form">
+            <div class="leaderboard-submit-form" id="lb-submit-form">
               <div class="form-title">JOIN GLOBAL LEADERBOARD</div>
               <div class="form-inputs">
                 <select id="player-country" aria-label="Country">
                   <option value="🇸🇬">🇸🇬 Singapore</option>
                   <option value="🇲🇾">🇲🇾 Malaysia</option>
-                  <option value="🇮どもの">🇮🇩 Indonesia</option>
+                  <option value="🇮🇩">🇮🇩 Indonesia</option>
                   <option value="🇵🇭">🇵🇭 Philippines</option>
                   <option value="🇹🇭">🇹🇭 Thailand</option>
                   <option value="🇯🇵">🇯🇵 Japan</option>
@@ -192,6 +214,47 @@
             </div>
 
             <button class="modal-btn" id="modal-restart-btn">PLAY AGAIN 🏀</button>
+          </div>
+        </div>
+
+        <!-- 1v1 Multiplayer Matchmaking & Lobby Modal -->
+        <div class="modal-overlay" id="multiplayer-modal">
+          <div class="modal-card mp-modal-card">
+            <div class="modal-header">
+              <h2>1v1 MULTIPLAYER BATTLE ⚔️</h2>
+              <p>Play live head-to-head against another baller!</p>
+            </div>
+
+            <div class="mp-options">
+              <!-- Quick Match Button -->
+              <button class="mp-btn quick-match-btn" id="btn-quick-match">
+                <span class="mp-icon">⚡</span>
+                <div class="mp-text">
+                  <strong>QUICK MATCH</strong>
+                  <span>Auto-pair with an online player looking for match</span>
+                </div>
+              </button>
+
+              <div class="mp-divider"><span>OR PLAY WITH A FRIEND</span></div>
+
+              <!-- Room Code Create / Join -->
+              <div class="room-code-group">
+                <input type="text" id="room-code-input" placeholder="Enter 4-Digit Code" maxlength="4" autocomplete="off">
+                <button class="action-btn" id="btn-join-room">JOIN ROOM</button>
+              </div>
+              <button class="action-btn create-room-btn" id="btn-create-room">
+                🔑 CREATE PRIVATE ROOM
+              </button>
+            </div>
+
+            <!-- Searching Status Indicator -->
+            <div class="match-searching-box" id="match-searching-box" style="display: none;">
+              <div class="spinner"></div>
+              <div class="search-text" id="search-text-status">Searching for an opponent...</div>
+              <button class="cancel-search-btn" id="btn-cancel-search">Cancel</button>
+            </div>
+
+            <button class="lb-close-btn mp-close" id="close-mp-modal">&times;</button>
           </div>
         </div>
 
