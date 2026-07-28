@@ -16,6 +16,51 @@
 <body>
 
   <div class="app-container">
+    <!-- Top Bar: Hijri Calendar & Singapore Prayer Times -->
+    <aside class="prayer-top-bar" id="prayer-top-bar">
+      <div class="prayer-bar-left">
+        <div class="hijri-badge">
+          <span class="moon-icon">🌙</span>
+          <span id="hijri-date-text">Loading Hijri...</span>
+        </div>
+        <div class="location-tag">🇸🇬 Singapore (MUIS)</div>
+      </div>
+
+      <div class="prayer-times-strip" id="prayer-times-strip">
+        <div class="prayer-chip" id="chip-fajr">
+          <span class="p-name">Subuh</span>
+          <span class="p-time" id="time-fajr">--:--</span>
+        </div>
+        <div class="prayer-chip" id="chip-sunrise">
+          <span class="p-name">Syuruk</span>
+          <span class="p-time" id="time-sunrise">--:--</span>
+        </div>
+        <div class="prayer-chip" id="chip-dhuhr">
+          <span class="p-name">Zohor</span>
+          <span class="p-time" id="time-dhuhr">--:--</span>
+        </div>
+        <div class="prayer-chip" id="chip-asr">
+          <span class="p-name">Asar</span>
+          <span class="p-time" id="time-asr">--:--</span>
+        </div>
+        <div class="prayer-chip" id="chip-maghrib">
+          <span class="p-name">Maghrib</span>
+          <span class="p-time" id="time-maghrib">--:--</span>
+        </div>
+        <div class="prayer-chip" id="chip-isha">
+          <span class="p-name">Isyak</span>
+          <span class="p-time" id="time-isha">--:--</span>
+        </div>
+      </div>
+
+      <div class="prayer-bar-right">
+        <div class="countdown-badge" id="next-prayer-countdown">
+          <span class="cd-label">Next: <strong id="next-prayer-name">...</strong></span>
+          <span class="cd-timer" id="next-prayer-timer">--:--:--</span>
+        </div>
+      </div>
+    </aside>
+
     <!-- Header / Scoreboard -->
     <header class="scoreboard">
       <div class="brand">
@@ -148,7 +193,8 @@
 
     <!-- Footer -->
     <footer class="game-footer">
-      <p>Basketbola Mobile Web Arcade &bull; Touch & Keyboard Compatible</p>
+      <p>Basketbola Web Arcade &bull; Touch & Keyboard Compatible</p>
+      <p class="dev-attribution">Developed by <a href="https://instagram.com/codelaju" target="_blank" rel="noopener noreferrer">@codelaju</a></p>
     </footer>
   </div>
 

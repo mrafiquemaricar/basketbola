@@ -1,7 +1,7 @@
 /**
  * Basketbola - Web & Mobile Basketball Arcade Game Engine
  * Features: 2PT & 3PT Shooting Spots, Canvas Physics, Touch & Haptic Controls,
- * Arc Trajectory, Scoreboard, Streaks, Particle FX, Web Audio Sound Synthesis.
+ * Singapore MUIS Prayer Times, Hijri Calendar, Scoreboard, Streaks, Web Audio.
  */
 
 (function () {
@@ -11,7 +11,7 @@
   const canvas = document.getElementById('gameCanvas');
   const ctx = canvas.getContext('2d');
 
-  // DOM Elements
+  // Scoreboard DOM Elements
   const scoreDisplay = document.getElementById('score-display');
   const highScoreDisplay = document.getElementById('high-score-display');
   const streakDisplay = document.getElementById('streak-display');
@@ -28,6 +28,29 @@
   const angleDisplay = document.getElementById('angle-display');
   const soundToggleBtn = document.getElementById('sound-toggle-btn');
   const soundIcon = document.getElementById('sound-icon');
+
+  // Prayer & Hijri DOM Elements
+  const hijriDateText = document.getElementById('hijri-date-text');
+  const nextPrayerNameEl = document.getElementById('next-prayer-name');
+  const nextPrayerTimerEl = document.getElementById('next-prayer-timer');
+
+  const prayerChips = {
+    Fajr: document.getElementById('chip-fajr'),
+    Sunrise: document.getElementById('chip-sunrise'),
+    Dhuhr: document.getElementById('chip-dhuhr'),
+    Asr: document.getElementById('chip-asr'),
+    Maghrib: document.getElementById('chip-maghrib'),
+    Isha: document.getElementById('chip-isha')
+  };
+
+  const prayerTimeEls = {
+    Fajr: document.getElementById('time-fajr'),
+    Sunrise: document.getElementById('time-sunrise'),
+    Dhuhr: document.getElementById('time-dhuhr'),
+    Asr: document.getElementById('time-asr'),
+    Maghrib: document.getElementById('time-maghrib'),
+    Isha: document.getElementById('time-isha')
+  };
 
   // On-screen Touch Buttons
   const btnToggleSpot = document.getElementById('btn-toggle-spot');
@@ -166,9 +189,9 @@
       const gain = audioCtx.createGain();
 
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
-      osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.08); // E5
-      osc.frequency.setValueAtTime(783.99, audioCtx.currentTime + 0.16); // G5
+      osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
+      osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.08);
+      osc.frequency.setValueAtTime(783.99, audioCtx.currentTime + 0.16);
 
       gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
@@ -181,6 +204,138 @@
     } catch (e) {
       console.warn("Audio error:", e);
     }
+  }
+
+  // --- Singapore MUIS Prayer Times & Hijri Calendar Engine ---
+  let prayerTimesData = {
+    Fajr: "05:40",
+    Sunrise: "07:05",
+    Dhuhr: "13:12",
+    Asr: "16:35",
+    Maghrib: "19:15",
+    Isha: "20:28"
+  };
+
+  const PRAYER_LABELS = {
+    Fajr: 'Subuh',
+    Sunrise: 'Syuruk',
+    Dhuhr: 'Zohor',
+    Asr: 'Asar',
+    Maghrib: 'Maghrib',
+    Isha: 'Isyak'
+  };
+
+  function fetchSingaporePrayerTimes() {
+    // Aladhan API Method 11 is Majlis Ugama Islam Singapura (MUIS)
+    fetch('https://api.aladhan.com/v1/timingsByCity?city=Singapore&country=Singapore&method=11')
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.code === 200 && data.data) {
+          const timings = data.data.timings;
+          prayerTimesData.Fajr = cleanTimeString(timings.Fajr);
+          prayerTimesData.Sunrise = cleanTimeString(timings.Sunrise);
+          prayerTimesData.Dhuhr = cleanTimeString(timings.Dhuhr);
+          prayerTimesData.Asr = cleanTimeString(timings.Asr);
+          prayerTimesData.Maghrib = cleanTimeString(timings.Maghrib);
+          prayerTimesData.Isha = cleanTimeString(timings.Isha);
+
+          // Update Hijri Date
+          const hijri = data.data.date.hijri;
+          if (hijri) {
+            hijriDateText.textContent = `${hijri.day} ${hijri.month.en} ${hijri.year} AH`;
+          }
+          updatePrayerTimesDisplay();
+        }
+      })
+      .catch(err => {
+        console.warn("Using offline Singapore prayer time calculations:", err);
+        fallbackHijriDate();
+        updatePrayerTimesDisplay();
+      });
+  }
+
+  function cleanTimeString(t) {
+    if (!t) return "00:00";
+    return t.split(' ')[0]; // removes trailing (SGT) timezone text if present
+  }
+
+  function fallbackHijriDate() {
+    try {
+      const formatter = new Intl.DateTimeFormat('en-TN-u-ca-islamic', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+      });
+      hijriDateText.textContent = formatter.format(new Date());
+    } catch (e) {
+      hijriDateText.textContent = "14 Safar 1448 AH";
+    }
+  }
+
+  function updatePrayerTimesDisplay() {
+    for (let key in prayerTimesData) {
+      if (prayerTimeEls[key]) {
+        prayerTimeEls[key].textContent = prayerTimesData[key];
+      }
+    }
+    updatePrayerCountdown();
+  }
+
+  function updatePrayerCountdown() {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+    const currentDate = now.getDate();
+
+    const prayerOrder = ['Fajr', 'Sunrise', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
+    let nextPrayerKey = null;
+    let nextPrayerTargetTime = null;
+
+    for (let key of prayerOrder) {
+      const [h, m] = prayerTimesData[key].split(':').map(Number);
+      const pDate = new Date(currentYear, currentMonth, currentDate, h, m, 0);
+
+      if (pDate > now) {
+        nextPrayerKey = key;
+        nextPrayerTargetTime = pDate;
+        break;
+      }
+    }
+
+    // If all prayers today have passed, next prayer is Fajr tomorrow
+    if (!nextPrayerKey) {
+      nextPrayerKey = 'Fajr';
+      const [h, m] = prayerTimesData['Fajr'].split(':').map(Number);
+      nextPrayerTargetTime = new Date(currentYear, currentMonth, currentDate + 1, h, m, 0);
+    }
+
+    // Highlight active chip
+    for (let key in prayerChips) {
+      if (prayerChips[key]) {
+        prayerChips[key].classList.toggle('next-prayer', key === nextPrayerKey);
+      }
+    }
+
+    // Update countdown timer
+    if (nextPrayerTargetTime && nextPrayerNameEl && nextPrayerTimerEl) {
+      nextPrayerNameEl.textContent = PRAYER_LABELS[nextPrayerKey] || nextPrayerKey;
+      const diffMs = nextPrayerTargetTime - now;
+
+      if (diffMs > 0) {
+        const totalSeconds = Math.floor(diffMs / 1000);
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+
+        nextPrayerTimerEl.textContent = `${padZero(hours)}:${padZero(minutes)}:${padZero(seconds)}`;
+      } else {
+        nextPrayerTimerEl.textContent = "00:00:00";
+      }
+    }
+  }
+
+  function padZero(num) {
+    return num < 10 ? `0${num}` : `${num}`;
   }
 
   // --- Game State Constants & Variables ---
@@ -210,9 +365,9 @@
     shotsTaken: 0,
     shotsMade: 0,
     currentSpotKey: '3pt',
-    angle: 52, // launch angle in degrees
-    power: 0, // 0 to 100
-    powerDirection: 1.6, // charging speed
+    angle: 52,
+    power: 0,
+    powerDirection: 1.6,
     isCharging: false,
     soundOn: true,
     bannerTimeout: null,
@@ -299,7 +454,6 @@
     state.currentSpotKey = spotKey;
     const spot = SPOTS[spotKey];
     
-    // Update Badge & UI
     shotTypeText.textContent = spot.label;
     shotPointsTag.textContent = `+${spot.points} PTS`;
     if (spotBtnLabel) spotBtnLabel.textContent = spot.nextLabel;
@@ -346,7 +500,6 @@
     if (btnShoot) btnShoot.classList.remove('active');
     triggerHaptic(30);
 
-    // Launch calculation
     const spot = SPOTS[state.currentSpotKey];
     const powerRatio = state.power / 100;
     
@@ -425,7 +578,7 @@
         }
       }
 
-      // 2. Rim Collision (Front Rim & Back Rim)
+      // 2. Rim Collision
       checkRimPointCollision(rimFront);
       checkRimPointCollision(rimBack);
 
@@ -985,6 +1138,11 @@
   setupEvents();
   updateScoreboardUI();
   resetBall();
+
+  // Fetch Singapore MUIS Prayer Times & Hijri Calendar
+  fetchSingaporePrayerTimes();
+  setInterval(updatePrayerCountdown, 1000);
+
   requestAnimationFrame(gameLoop);
 
 })();

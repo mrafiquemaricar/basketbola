@@ -43,7 +43,7 @@ body {
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  padding: 14px;
+  padding: 12px;
 }
 
 .app-container {
@@ -51,7 +51,142 @@ body {
   max-width: 1100px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
+}
+
+/* Prayer & Hijri Top Bar */
+.prayer-top-bar {
+  background: rgba(16, 21, 38, 0.88);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  flex-wrap: wrap;
+}
+
+.prayer-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.hijri-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 189, 0, 0.12);
+  border: 1px solid rgba(255, 189, 0, 0.3);
+  color: var(--accent-gold);
+  padding: 4px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+.location-tag {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.prayer-times-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px 0;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.prayer-times-strip::-webkit-scrollbar {
+  height: 4px;
+}
+
+.prayer-times-strip::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+
+.prayer-chip {
+  background: rgba(10, 13, 24, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-sm);
+  padding: 4px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 62px;
+  transition: all 0.2s ease;
+}
+
+.prayer-chip .p-name {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.prayer-chip .p-time {
+  font-family: var(--font-arcade);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+/* Active Next Prayer Chip Glow */
+.prayer-chip.next-prayer {
+  background: rgba(0, 229, 255, 0.15);
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 12px rgba(0, 229, 255, 0.3);
+}
+
+.prayer-chip.next-prayer .p-name {
+  color: var(--accent-cyan);
+}
+
+.prayer-chip.next-prayer .p-time {
+  color: #fff;
+}
+
+.prayer-bar-right {
+  display: flex;
+  align-items: center;
+}
+
+.countdown-badge {
+  background: linear-gradient(135deg, rgba(255, 107, 0, 0.2) 0%, rgba(255, 189, 0, 0.1) 100%);
+  border: 1px solid var(--accent-orange-glow);
+  border-radius: 20px;
+  padding: 5px 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.countdown-badge .cd-label {
+  color: var(--text-main);
+}
+
+.countdown-badge .cd-label strong {
+  color: var(--accent-orange);
+  font-weight: 800;
+}
+
+.countdown-badge .cd-timer {
+  font-family: var(--font-arcade);
+  font-weight: 800;
+  color: var(--accent-gold);
+  letter-spacing: 1px;
 }
 
 /* Scoreboard Header */
@@ -153,7 +288,7 @@ body {
 .game-wrapper {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
 }
 
 /* Canvas Wrapper */
@@ -166,7 +301,7 @@ body {
   overflow: hidden;
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
   aspect-ratio: 1000 / 560;
-  touch-action: none; /* Allows custom canvas touch gestures */
+  touch-action: none;
 }
 
 canvas {
@@ -379,7 +514,6 @@ canvas {
   text-align: center;
 }
 
-/* Primary Shoot Button */
 .touch-row.shoot-row {
   width: 100%;
 }
@@ -509,12 +643,48 @@ canvas {
   font-size: 0.8rem;
   color: var(--text-muted);
   padding: 6px 0 14px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+}
+
+.dev-attribution {
+  font-size: 0.85rem;
+  color: var(--text-main);
+  font-weight: 600;
+}
+
+.dev-attribution a {
+  color: var(--accent-cyan);
+  text-decoration: none;
+  font-weight: 800;
+  border-bottom: 1px dashed rgba(0, 229, 255, 0.4);
+  padding-bottom: 1px;
+  transition: all 0.2s ease;
+}
+
+.dev-attribution a:hover {
+  color: #fff;
+  border-bottom-color: #fff;
+  text-shadow: 0 0 8px rgba(0, 229, 255, 0.6);
 }
 
 /* Responsive Media Queries */
 @media (max-width: 600px) {
   body {
-    padding: 8px;
+    padding: 6px;
+  }
+  .prayer-top-bar {
+    padding: 8px 10px;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .prayer-bar-left {
+    justify-content: space-between;
+  }
+  .prayer-bar-right {
+    justify-content: center;
   }
   .scoreboard {
     padding: 10px 12px;
@@ -561,16 +731,19 @@ canvas {
   body {
     padding: 4px;
   }
+  .prayer-top-bar {
+    padding: 4px 10px;
+  }
   .app-container {
-    gap: 8px;
+    gap: 6px;
   }
   .scoreboard {
-    padding: 6px 12px;
+    padding: 4px 12px;
   }
   .brand h1 {
     font-size: 1.1rem;
   }
   .controls-panel {
-    display: none; /* Hide detailed keyboard instructions in landscape mobile to maximize canvas */
+    display: none;
   }
 }
