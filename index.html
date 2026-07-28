@@ -75,20 +75,20 @@
           <h1>BASKETBOLA</h1>
         </div>
 
-        <button class="leaderboard-header-btn" id="open-leaderboard-btn">
+        <button class="leaderboard-header-btn" id="open-leaderboard-btn" type="button">
           🏆 LEADERBOARD
         </button>
       </div>
 
       <!-- Mode Selector Pills -->
       <div class="mode-selector">
-        <button class="mode-btn active" id="mode-timer-btn" title="60 seconds rapid fire challenge">
+        <button class="mode-btn active" id="mode-timer-btn" type="button" title="60 seconds rapid fire challenge">
           <span>⏱️</span> 60s Time Attack
         </button>
-        <button class="mode-btn mode-mp-btn" id="mode-mp-btn" title="Live 1v1 Real-Time Battle">
+        <button class="mode-btn mode-mp-btn" id="mode-mp-btn" type="button" title="Live 1v1 Real-Time Battle">
           <span>⚔️</span> 1v1 Battle
         </button>
-        <button class="mode-btn" id="mode-endless-btn" title="Practice without timer">
+        <button class="mode-btn" id="mode-endless-btn" type="button" title="Practice without timer">
           <span>♾️</span> Endless
         </button>
       </div>
@@ -158,158 +158,24 @@
         <div class="shot-result-banner" id="shot-result-banner">
           <span class="result-text" id="result-text">SWISH! +3</span>
         </div>
-
-        <!-- Game Over / Match End Modal Overlay -->
-        <div class="modal-overlay" id="game-over-modal">
-          <div class="modal-card">
-            <div class="modal-header">
-              <h2 id="modal-title-text">TIME'S UP! ⏱️</h2>
-              <p id="modal-subtitle-text">60-Second Challenge Complete</p>
-            </div>
-            
-            <div class="modal-stats">
-              <div class="m-stat">
-                <span class="m-label" id="m-score-label">FINAL SCORE</span>
-                <span class="m-val highlight" id="modal-score">0</span>
-              </div>
-              <div class="m-stat">
-                <span class="m-label">ACCURACY</span>
-                <span class="m-val" id="modal-accuracy">0%</span>
-              </div>
-              <div class="m-stat">
-                <span class="m-label">SHOTS MADE</span>
-                <span class="m-val" id="modal-shots">0/0</span>
-              </div>
-              <div class="m-stat">
-                <span class="m-label">BEST STREAK</span>
-                <span class="m-val" id="modal-streak">0 🔥</span>
-              </div>
-            </div>
-
-            <div class="modal-record-badge" id="new-record-badge" style="display: none;">
-              🎉 NEW HIGH SCORE RECORD! 🎉
-            </div>
-
-            <!-- Optional Leaderboard Submission Form -->
-            <div class="leaderboard-submit-form" id="lb-submit-form">
-              <div class="form-title">JOIN GLOBAL LEADERBOARD</div>
-              <div class="form-inputs">
-                <select id="player-country" aria-label="Country">
-                  <option value="🇸🇬">🇸🇬 Singapore</option>
-                  <option value="🇲🇾">🇲🇾 Malaysia</option>
-                  <option value="🇮🇩">🇮🇩 Indonesia</option>
-                  <option value="🇵🇭">🇵🇭 Philippines</option>
-                  <option value="🇹🇭">🇹🇭 Thailand</option>
-                  <option value="🇯🇵">🇯🇵 Japan</option>
-                  <option value="🇺🇸">🇺🇸 USA</option>
-                  <option value="🇬🇧">🇬🇧 UK</option>
-                  <option value="🇦🇺">🇦🇺 Australia</option>
-                  <option value="🌐">🌐 Other</option>
-                </select>
-                <input type="text" id="player-nickname" placeholder="Nickname (e.g. Baller)" maxlength="12" autocomplete="off">
-              </div>
-              <button class="submit-score-btn" id="btn-submit-leaderboard">
-                SUBMIT SCORE 🏆
-              </button>
-            </div>
-
-            <button class="modal-btn" id="modal-restart-btn">PLAY AGAIN 🏀</button>
-          </div>
-        </div>
-
-        <!-- 1v1 Multiplayer Matchmaking & Lobby Modal -->
-        <div class="modal-overlay" id="multiplayer-modal">
-          <div class="modal-card mp-modal-card">
-            <div class="modal-header">
-              <h2>1v1 MULTIPLAYER BATTLE ⚔️</h2>
-              <p>Play live head-to-head against another baller!</p>
-            </div>
-
-            <div class="mp-options">
-              <!-- Quick Match Button -->
-              <button class="mp-btn quick-match-btn" id="btn-quick-match">
-                <span class="mp-icon">⚡</span>
-                <div class="mp-text">
-                  <strong>QUICK MATCH</strong>
-                  <span>Auto-pair with an online player looking for match</span>
-                </div>
-              </button>
-
-              <div class="mp-divider"><span>OR PLAY WITH A FRIEND</span></div>
-
-              <!-- Room Code Create / Join -->
-              <div class="room-code-group">
-                <input type="text" id="room-code-input" placeholder="Enter 4-Digit Code" maxlength="4" autocomplete="off">
-                <button class="action-btn" id="btn-join-room">JOIN ROOM</button>
-              </div>
-              <button class="action-btn create-room-btn" id="btn-create-room">
-                🔑 CREATE PRIVATE ROOM
-              </button>
-            </div>
-
-            <!-- Searching Status Indicator -->
-            <div class="match-searching-box" id="match-searching-box" style="display: none;">
-              <div class="spinner"></div>
-              <div class="search-text" id="search-text-status">Searching for an opponent...</div>
-              <button class="cancel-search-btn" id="btn-cancel-search">Cancel</button>
-            </div>
-
-            <button class="lb-close-btn mp-close" id="close-mp-modal">&times;</button>
-          </div>
-        </div>
-
-        <!-- Global Leaderboard Modal -->
-        <div class="modal-overlay" id="leaderboard-modal">
-          <div class="modal-card lb-modal-card">
-            <div class="modal-header lb-header">
-              <h2>GLOBAL LEADERBOARD 🏆</h2>
-              <button class="lb-close-btn" id="close-lb-btn">&times;</button>
-            </div>
-
-            <!-- Leaderboard Mode Tabs -->
-            <div class="lb-tabs">
-              <button class="lb-tab active" id="lb-tab-timer">⏱️ 60s Time Attack</button>
-              <button class="lb-tab" id="lb-tab-endless">♾️ Endless</button>
-            </div>
-
-            <!-- Leaderboard Table -->
-            <div class="lb-table-wrapper">
-              <table class="lb-table">
-                <thead>
-                  <tr>
-                    <th>RANK</th>
-                    <th>PLAYER</th>
-                    <th>SCORE</th>
-                    <th>ACCURACY</th>
-                  </tr>
-                </thead>
-                <tbody id="lb-table-body">
-                  <!-- Dynamically populated -->
-                </tbody>
-              </table>
-            </div>
-
-            <button class="modal-btn" id="lb-play-btn">PLAY NOW 🏀</button>
-          </div>
-        </div>
       </div>
 
       <!-- Mobile & Touch Arcade Controller -->
       <section class="touch-controller-deck">
         <div class="touch-row top-row">
-          <button class="action-btn spot-btn" id="btn-toggle-spot">
+          <button class="action-btn spot-btn" id="btn-toggle-spot" type="button">
             📍 <span id="spot-btn-label">Switch to 2PT</span>
           </button>
           
           <div class="angle-control-group">
-            <button class="action-btn angle-btn" id="btn-angle-down" aria-label="Decrease Angle">📐 −</button>
+            <button class="action-btn angle-btn" id="btn-angle-down" type="button" aria-label="Decrease Angle">📐 −</button>
             <span class="angle-readout" id="angle-display">52°</span>
-            <button class="action-btn angle-btn" id="btn-angle-up" aria-label="Increase Angle">📐 +</button>
+            <button class="action-btn angle-btn" id="btn-angle-up" type="button" aria-label="Increase Angle">📐 +</button>
           </div>
         </div>
 
         <div class="touch-row shoot-row">
-          <button class="action-btn shoot-btn" id="btn-shoot">
+          <button class="action-btn shoot-btn" id="btn-shoot" type="button">
             <span>HOLD TO SHOOT</span> 🏀
           </button>
         </div>
@@ -319,7 +185,7 @@
       <section class="controls-panel">
         <div class="panel-header">
           <h2>CONTROLS & SETTINGS</h2>
-          <button id="sound-toggle-btn" class="sound-btn" title="Toggle Sound Effects">
+          <button id="sound-toggle-btn" class="sound-btn" type="button" title="Toggle Sound Effects">
             <span id="sound-icon">🔊</span> Sound ON
           </button>
         </div>
@@ -373,6 +239,142 @@
       <p>Basketbola Web Arcade &bull; Touch & Keyboard Compatible</p>
       <p class="dev-attribution">Developed by <a href="https://instagram.com/codelaju" target="_blank" rel="noopener noreferrer">@codelaju</a></p>
     </footer>
+  </div>
+
+  <!-- Fullscreen Fixed Modals (Positioned at Root Body Level for Universal Mobile Responsiveness) -->
+
+  <!-- Game Over / Match End Modal Overlay -->
+  <div class="modal-overlay" id="game-over-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 id="modal-title-text">TIME'S UP! ⏱️</h2>
+        <p id="modal-subtitle-text">60-Second Challenge Complete</p>
+      </div>
+      
+      <div class="modal-stats">
+        <div class="m-stat">
+          <span class="m-label" id="m-score-label">FINAL SCORE</span>
+          <span class="m-val highlight" id="modal-score">0</span>
+        </div>
+        <div class="m-stat">
+          <span class="m-label">ACCURACY</span>
+          <span class="m-val" id="modal-accuracy">0%</span>
+        </div>
+        <div class="m-stat">
+          <span class="m-label">SHOTS MADE</span>
+          <span class="m-val" id="modal-shots">0/0</span>
+        </div>
+        <div class="m-stat">
+          <span class="m-label">BEST STREAK</span>
+          <span class="m-val" id="modal-streak">0 🔥</span>
+        </div>
+      </div>
+
+      <div class="modal-record-badge" id="new-record-badge" style="display: none;">
+        🎉 NEW HIGH SCORE RECORD! 🎉
+      </div>
+
+      <!-- Optional Leaderboard Submission Form -->
+      <div class="leaderboard-submit-form" id="lb-submit-form">
+        <div class="form-title">JOIN GLOBAL LEADERBOARD</div>
+        <div class="form-inputs">
+          <select id="player-country" aria-label="Country">
+            <option value="🇸🇬">🇸🇬 Singapore</option>
+            <option value="🇲🇾">🇲🇾 Malaysia</option>
+            <option value="🇮🇩">🇮🇩 Indonesia</option>
+            <option value="🇵🇭">🇵🇭 Philippines</option>
+            <option value="🇹🇭">🇹🇭 Thailand</option>
+            <option value="🇯🇵">🇯🇵 Japan</option>
+            <option value="🇺🇸">🇺🇸 USA</option>
+            <option value="🇬🇧">🇬🇧 UK</option>
+            <option value="🇦🇺">🇦🇺 Australia</option>
+            <option value="🌐">🌐 Other</option>
+          </select>
+          <input type="text" id="player-nickname" placeholder="Nickname (e.g. Baller)" maxlength="12" autocomplete="off">
+        </div>
+        <button class="submit-score-btn" id="btn-submit-leaderboard" type="button">
+          SUBMIT SCORE 🏆
+        </button>
+      </div>
+
+      <button class="modal-btn" id="modal-restart-btn" type="button">PLAY AGAIN 🏀</button>
+    </div>
+  </div>
+
+  <!-- 1v1 Multiplayer Matchmaking & Lobby Modal -->
+  <div class="modal-overlay" id="multiplayer-modal">
+    <div class="modal-card mp-modal-card">
+      <div class="modal-header">
+        <h2>1v1 MULTIPLAYER BATTLE ⚔️</h2>
+        <p>Play live head-to-head against another baller!</p>
+      </div>
+
+      <div class="mp-options">
+        <!-- Quick Match Button -->
+        <button class="mp-btn quick-match-btn" id="btn-quick-match" type="button">
+          <span class="mp-icon">⚡</span>
+          <div class="mp-text">
+            <strong>QUICK MATCH</strong>
+            <span>Auto-pair with an online player looking for match</span>
+          </div>
+        </button>
+
+        <div class="mp-divider"><span>OR PLAY WITH A FRIEND</span></div>
+
+        <!-- Room Code Create / Join -->
+        <div class="room-code-group">
+          <input type="text" id="room-code-input" placeholder="Enter 4-Digit Code" maxlength="4" autocomplete="off">
+          <button class="action-btn" id="btn-join-room" type="button">JOIN ROOM</button>
+        </div>
+        <button class="action-btn create-room-btn" id="btn-create-room" type="button">
+          🔑 CREATE PRIVATE ROOM
+        </button>
+      </div>
+
+      <!-- Searching Status Indicator -->
+      <div class="match-searching-box" id="match-searching-box" style="display: none;">
+        <div class="spinner"></div>
+        <div class="search-text" id="search-text-status">Searching for an opponent...</div>
+        <button class="cancel-search-btn" id="btn-cancel-search" type="button">Cancel</button>
+      </div>
+
+      <button class="lb-close-btn mp-close" id="close-mp-modal" type="button">&times;</button>
+    </div>
+  </div>
+
+  <!-- Global Leaderboard Modal -->
+  <div class="modal-overlay" id="leaderboard-modal">
+    <div class="modal-card lb-modal-card">
+      <div class="modal-header lb-header">
+        <h2>GLOBAL LEADERBOARD 🏆</h2>
+        <button class="lb-close-btn" id="close-lb-btn" type="button">&times;</button>
+      </div>
+
+      <!-- Leaderboard Mode Tabs -->
+      <div class="lb-tabs">
+        <button class="lb-tab active" id="lb-tab-timer" type="button">⏱️ 60s Time Attack</button>
+        <button class="lb-tab" id="lb-tab-endless" type="button">♾️ Endless</button>
+      </div>
+
+      <!-- Leaderboard Table -->
+      <div class="lb-table-wrapper">
+        <table class="lb-table">
+          <thead>
+            <tr>
+              <th>RANK</th>
+              <th>PLAYER</th>
+              <th>SCORE</th>
+              <th>ACCURACY</th>
+            </tr>
+          </thead>
+          <tbody id="lb-table-body">
+            <!-- Dynamically populated -->
+          </tbody>
+        </table>
+      </div>
+
+      <button class="modal-btn" id="lb-play-btn" type="button">PLAY NOW 🏀</button>
+    </div>
   </div>
 
   <script src="app.js"></script>
