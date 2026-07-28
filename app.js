@@ -1,7 +1,7 @@
 /**
  * Basketbola - Web & Mobile Basketball Arcade Game Engine
- * Features: Endless Mode vs 60s Time Attack Challenge, 2PT & 3PT Shooting Spots,
- * Touch & Haptic Controls, Singapore MUIS Prayer Times, Hijri Calendar, Web Audio.
+ * Features: Endless Mode vs 60s Time Attack Challenge, Global Leaderboard & Country Pickers,
+ * 2PT & 3PT Shooting Spots, Touch & Haptics, Singapore MUIS Prayer Times, Web Audio.
  */
 
 (function () {
@@ -35,7 +35,7 @@
   const timerStatCard = document.getElementById('timer-stat-card');
   const timerDisplay = document.getElementById('timer-display');
 
-  // Modal DOM
+  // Game Over Modal DOM
   const gameOverModal = document.getElementById('game-over-modal');
   const modalScore = document.getElementById('modal-score');
   const modalAccuracy = document.getElementById('modal-accuracy');
@@ -43,6 +43,20 @@
   const modalStreak = document.getElementById('modal-streak');
   const newRecordBadge = document.getElementById('new-record-badge');
   const modalRestartBtn = document.getElementById('modal-restart-btn');
+
+  // Leaderboard DOM Elements
+  const openLeaderboardBtn = document.getElementById('open-leaderboard-btn');
+  const leaderboardModal = document.getElementById('leaderboard-modal');
+  const closeLbBtn = document.getElementById('close-lb-btn');
+  const lbTabTimer = document.getElementById('lb-tab-timer');
+  const lbTabEndless = document.getElementById('lb-tab-endless');
+  const lbTableBody = document.getElementById('lb-table-body');
+  const lbPlayBtn = document.getElementById('lb-play-btn');
+
+  // Form DOM
+  const playerCountryInput = document.getElementById('player-country');
+  const playerNicknameInput = document.getElementById('player-nickname');
+  const btnSubmitLeaderboard = document.getElementById('btn-submit-leaderboard');
 
   // Prayer & Hijri DOM Elements
   const hijriDateText = document.getElementById('hijri-date-text');
@@ -246,6 +260,120 @@
     }
   }
 
+  // --- Global Leaderboard Manager ---
+  const DEFAULT_LB_TIMER = [
+    { country: '🇸🇬', name: '@codelaju', score: 48, accuracy: 92 },
+    { country: '🇸🇬', name: 'SG_Hooper', score: 42, accuracy: 85 },
+    { country: '🇲🇾', name: 'KL_Shooter', score: 39, accuracy: 81 },
+    { country: '🇮🇩', name: 'Jkt_Bucket', score: 35, accuracy: 78 },
+    { country: '🇯🇵', name: 'Tokyo_3pt', score: 31, accuracy: 75 }
+  ];
+
+  const DEFAULT_LB_ENDLESS = [
+    { country: '🇸🇬', name: '@codelaju', score: 120, accuracy: 95 },
+    { country: '🇺🇸', name: 'Mamba_24', score: 98, accuracy: 90 },
+    { country: '🇲🇾', name: 'Penang_King', score: 84, accuracy: 84 }
+  ];
+
+  let currentLbTab = 'timer'; // 'timer' or 'endless'
+  let lastSubmittedId = null;
+
+  function loadLeaderboard(mode) {
+    const key = mode === 'timer' ? 'basketbola_lb_timer' : 'basketbola_lb_endless';
+    const defaults = mode === 'timer' ? DEFAULT_LB_TIMER : DEFAULT_LB_ENDLESS;
+    const stored = localStorage.getItem(key);
+    if (!stored) {
+      localStorage.setItem(key, JSON.stringify(defaults));
+      return defaults;
+    }
+    try {
+      return JSON.parse(stored);
+    } catch (e) {
+      return defaults;
+    }
+  }
+
+  function saveLeaderboard(mode, list) {
+    const key = mode === 'timer' ? 'basketbola_lb_timer' : 'basketbola_lb_endless';
+    localStorage.setItem(key, JSON.stringify(list));
+  }
+
+  function renderLeaderboardTable(mode) {
+    currentLbTab = mode;
+    lbTabTimer.classList.toggle('active', mode === 'timer');
+    lbTabEndless.classList.toggle('active', mode === 'endless');
+
+    const list = loadLeaderboard(mode);
+    lbTableBody.innerHTML = '';
+
+    list.forEach((item, index) => {
+      const tr = document.createElement('tr');
+      if (item.id && item.id === lastSubmittedId) {
+        tr.classList.add('user-row');
+      }
+
+      let rankDisplay = `#${index + 1}`;
+      if (index === 0) rankDisplay = '🥇 1st';
+      else if (index === 1) rankDisplay = '🥈 2nd';
+      else if (index === 2) rankDisplay = '🥉 3rd';
+
+      tr.innerHTML = `
+        <td><strong>${rankDisplay}</strong></td>
+        <td>${item.country || '🌐'} ${escapeHtml(item.name || 'Anonymous')}</td>
+        <td><strong>${item.score}</strong> pts</td>
+        <td>${item.accuracy}%</td>
+      `;
+      lbTableBody.appendChild(tr);
+    });
+  }
+
+  function escapeHtml(str) {
+    return str.replace(/[&<>"']/g, function(m) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
+    });
+  }
+
+  function submitCurrentScore() {
+    const name = (playerNicknameInput.value || 'Player').trim().slice(0, 12);
+    const country = playerCountryInput.value || '🌐';
+
+    localStorage.setItem('basketbola_last_nick', name);
+    localStorage.setItem('basketbola_last_country', country);
+
+    const mode = state.gameMode;
+    const list = loadLeaderboard(mode);
+
+    const pct = state.shotsTaken > 0 ? Math.round((state.shotsMade / state.shotsTaken) * 100) : 0;
+    const submissionId = Date.now().toString();
+    lastSubmittedId = submissionId;
+
+    list.push({
+      id: submissionId,
+      country: country,
+      name: name,
+      score: state.score,
+      accuracy: pct
+    });
+
+    // Sort high to low by score
+    list.sort((a, b) => b.score - a.score || b.accuracy - a.accuracy);
+    const top15 = list.slice(0, 15);
+    saveLeaderboard(mode, top15);
+
+    triggerHaptic(60);
+    showResultBanner('SCORE SUBMITTED! 🏆', 'swish');
+
+    if (gameOverModal) gameOverModal.classList.remove('active');
+    renderLeaderboardTable(mode);
+    if (leaderboardModal) leaderboardModal.classList.add('active');
+  }
+
+  // Restore saved player identity if present
+  const savedNick = localStorage.getItem('basketbola_last_nick');
+  const savedCountry = localStorage.getItem('basketbola_last_country');
+  if (savedNick && playerNicknameInput) playerNicknameInput.value = savedNick;
+  if (savedCountry && playerCountryInput) playerCountryInput.value = savedCountry;
+
   // --- Singapore MUIS Prayer Times & Hijri Calendar Engine ---
   let prayerTimesData = {
     Fajr: "05:40",
@@ -393,7 +521,7 @@
   };
 
   let state = {
-    gameMode: 'endless', // 'endless' or 'timer'
+    gameMode: 'endless',
     score: 0,
     highScoreEndless: parseInt(localStorage.getItem('basketbola_highscore_endless') || '0', 10),
     highScoreTimer: parseInt(localStorage.getItem('basketbola_highscore_timer') || '0', 10),
@@ -410,7 +538,6 @@
     bannerTimeout: null,
     netSwishTimer: 0,
     touchStartY: 0,
-    // Time Attack Timer State
     timerSeconds: 60,
     timerActive: false,
     timerInterval: null,
@@ -495,6 +622,7 @@
     timerDisplay.textContent = '60s';
     timerStatCard.classList.remove('timer-warning');
     if (gameOverModal) gameOverModal.classList.remove('active');
+    if (leaderboardModal) leaderboardModal.classList.remove('active');
 
     updateScoreboardUI();
     resetBall();
@@ -538,7 +666,6 @@
       localStorage.setItem('basketbola_highscore_timer', state.score.toString());
     }
 
-    // Populate Modal
     modalScore.textContent = state.score;
     const pct = state.shotsTaken > 0 ? Math.round((state.shotsMade / state.shotsTaken) * 100) : 0;
     modalAccuracy.textContent = `${pct}%`;
@@ -611,7 +738,6 @@
     powerMeterWrapper.classList.add('charging');
     if (btnShoot) btnShoot.classList.add('active');
 
-    // Start timer on first shot charge in time attack mode!
     if (state.gameMode === 'timer' && !state.timerActive) {
       startTimer();
     }
@@ -776,7 +902,6 @@
       state.bestStreakSession = state.streak;
     }
 
-    // High Score tracking per mode
     if (state.gameMode === 'endless') {
       if (state.score > state.highScoreEndless) {
         state.highScoreEndless = state.score;
@@ -1160,6 +1285,39 @@
 
   // --- Event Listeners & Keyboard / Touch Bindings ---
   function setupEvents() {
+    // Leaderboard Listeners
+    if (openLeaderboardBtn) {
+      openLeaderboardBtn.addEventListener('click', () => {
+        renderLeaderboardTable(state.gameMode);
+        if (leaderboardModal) leaderboardModal.classList.add('active');
+      });
+    }
+
+    if (closeLbBtn) {
+      closeLbBtn.addEventListener('click', () => {
+        if (leaderboardModal) leaderboardModal.classList.remove('active');
+      });
+    }
+
+    if (lbPlayBtn) {
+      lbPlayBtn.addEventListener('click', () => {
+        if (leaderboardModal) leaderboardModal.classList.remove('active');
+        restartGame();
+      });
+    }
+
+    if (lbTabTimer) {
+      lbTabTimer.addEventListener('click', () => renderLeaderboardTable('timer'));
+    }
+
+    if (lbTabEndless) {
+      lbTabEndless.addEventListener('click', () => renderLeaderboardTable('endless'));
+    }
+
+    if (btnSubmitLeaderboard) {
+      btnSubmitLeaderboard.addEventListener('click', submitCurrentScore);
+    }
+
     // Mode Switcher Listeners
     if (modeEndlessBtn) {
       modeEndlessBtn.addEventListener('click', () => setGameMode('endless'));

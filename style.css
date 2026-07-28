@@ -203,6 +203,12 @@ body {
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
 }
 
+.brand-group {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
 .brand {
   display: flex;
   align-items: center;
@@ -222,6 +228,25 @@ body {
   background: linear-gradient(135deg, #fff 0%, var(--accent-orange) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+}
+
+.leaderboard-header-btn {
+  background: rgba(255, 189, 0, 0.12);
+  border: 1px solid rgba(255, 189, 0, 0.4);
+  color: var(--accent-gold);
+  font-family: var(--font-arcade);
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 6px 12px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.leaderboard-header-btn:hover {
+  background: rgba(255, 189, 0, 0.25);
+  box-shadow: 0 0 12px rgba(255, 189, 0, 0.4);
+  transform: translateY(-1px);
 }
 
 /* Mode Selector Pills */
@@ -487,12 +512,12 @@ canvas {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(8, 10, 18, 0.85);
-  backdrop-filter: blur(10px);
+  background: rgba(8, 10, 18, 0.88);
+  backdrop-filter: blur(12px);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  padding: 16px;
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.3s ease;
@@ -508,16 +533,18 @@ canvas {
   background: #13192c;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
-  padding: 24px;
+  padding: 20px;
   width: 100%;
-  max-width: 400px;
+  max-width: 440px;
   text-align: center;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
   transform: translateY(20px);
   transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
 .modal-overlay.active .modal-card {
@@ -526,7 +553,7 @@ canvas {
 
 .modal-header h2 {
   font-family: var(--font-arcade);
-  font-size: 1.5rem;
+  font-size: 1.4rem;
   color: var(--accent-orange);
   letter-spacing: 1.5px;
   margin-bottom: 4px;
@@ -540,14 +567,14 @@ canvas {
 .modal-stats {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
+  gap: 8px;
 }
 
 .m-stat {
   background: rgba(10, 13, 24, 0.6);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: var(--radius-md);
-  padding: 10px;
+  padding: 8px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -562,7 +589,7 @@ canvas {
 
 .m-val {
   font-family: var(--font-arcade);
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   font-weight: 800;
   color: #fff;
   margin-top: 2px;
@@ -570,7 +597,7 @@ canvas {
 
 .m-val.highlight {
   color: var(--accent-orange);
-  font-size: 1.5rem;
+  font-size: 1.4rem;
 }
 
 .modal-record-badge {
@@ -578,11 +605,78 @@ canvas {
   border: 1px solid var(--accent-green);
   color: var(--accent-green);
   font-family: var(--font-arcade);
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 800;
   padding: 8px;
   border-radius: var(--radius-sm);
   animation: pulse-glow 1.2s infinite alternate;
+}
+
+/* Leaderboard Submission Form */
+.leaderboard-submit-form {
+  background: rgba(10, 13, 24, 0.7);
+  border: 1px dashed rgba(255, 189, 0, 0.4);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-title {
+  font-family: var(--font-arcade);
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--accent-gold);
+  letter-spacing: 1px;
+}
+
+.form-inputs {
+  display: flex;
+  gap: 8px;
+}
+
+.form-inputs select, .form-inputs input {
+  background: #1c233a;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #fff;
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  font-family: var(--font-main);
+  font-size: 0.85rem;
+  font-weight: 600;
+  outline: none;
+}
+
+.form-inputs select {
+  width: 100px;
+  cursor: pointer;
+}
+
+.form-inputs input {
+  flex: 1;
+}
+
+.form-inputs input:focus {
+  border-color: var(--accent-cyan);
+}
+
+.submit-score-btn {
+  background: rgba(255, 189, 0, 0.2);
+  border: 1px solid var(--accent-gold);
+  color: var(--accent-gold);
+  font-family: var(--font-arcade);
+  font-size: 0.8rem;
+  font-weight: 800;
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.submit-score-btn:hover {
+  background: var(--accent-gold);
+  color: #000;
 }
 
 .modal-btn {
@@ -590,9 +684,9 @@ canvas {
   border: none;
   color: #fff;
   font-family: var(--font-arcade);
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 900;
-  padding: 14px;
+  padding: 12px;
   border-radius: var(--radius-md);
   cursor: pointer;
   box-shadow: 0 4px 20px var(--accent-orange-glow);
@@ -601,6 +695,98 @@ canvas {
 
 .modal-btn:active {
   transform: scale(0.96);
+}
+
+/* Global Leaderboard Modal */
+.lb-modal-card {
+  max-width: 520px;
+}
+
+.lb-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.lb-close-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.6rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.lb-close-btn:hover {
+  color: #fff;
+}
+
+.lb-tabs {
+  display: flex;
+  background: rgba(10, 13, 24, 0.6);
+  border-radius: 20px;
+  padding: 4px;
+  gap: 4px;
+}
+
+.lb-tab {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-family: var(--font-main);
+  font-weight: 700;
+  font-size: 0.8rem;
+  padding: 8px;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.lb-tab.active {
+  background: var(--accent-cyan);
+  color: #000;
+  font-weight: 800;
+}
+
+.lb-table-wrapper {
+  max-height: 280px;
+  overflow-y: auto;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-sm);
+  scrollbar-width: thin;
+}
+
+.lb-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.85rem;
+}
+
+.lb-table th {
+  background: #181f34;
+  color: var(--text-muted);
+  font-family: var(--font-arcade);
+  font-size: 0.7rem;
+  padding: 8px 12px;
+  position: sticky;
+  top: 0;
+}
+
+.lb-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.lb-table tr.user-row {
+  background: rgba(0, 229, 255, 0.15);
+  border: 1px solid var(--accent-cyan);
+}
+
+.lb-table tr.user-row td {
+  color: var(--accent-cyan);
+  font-weight: 800;
 }
 
 /* Mobile & Touch Controller Deck */
@@ -860,8 +1046,9 @@ canvas {
     flex-direction: column;
     align-items: stretch;
   }
-  .brand {
-    justify-content: center;
+  .brand-group {
+    justify-content: space-between;
+    width: 100%;
   }
   .mode-selector {
     width: 100%;

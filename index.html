@@ -63,9 +63,15 @@
 
     <!-- Header / Scoreboard & Mode Switcher -->
     <header class="scoreboard">
-      <div class="brand">
-        <span class="icon">🏀</span>
-        <h1>BASKETBOLA</h1>
+      <div class="brand-group">
+        <div class="brand">
+          <span class="icon">🏀</span>
+          <h1>BASKETBOLA</h1>
+        </div>
+
+        <button class="leaderboard-header-btn" id="open-leaderboard-btn">
+          🏆 LEADERBOARD
+        </button>
       </div>
 
       <!-- Mode Selector Pills -->
@@ -162,7 +168,65 @@
               🎉 NEW HIGH SCORE RECORD! 🎉
             </div>
 
+            <!-- Optional Leaderboard Submission Form -->
+            <div class="leaderboard-submit-form">
+              <div class="form-title">JOIN GLOBAL LEADERBOARD</div>
+              <div class="form-inputs">
+                <select id="player-country" aria-label="Country">
+                  <option value="🇸🇬">🇸🇬 Singapore</option>
+                  <option value="🇲🇾">🇲🇾 Malaysia</option>
+                  <option value="🇮🇩">🇮🇩 Indonesia</option>
+                  <option value="🇵🇭">🇵🇭 Philippines</option>
+                  <option value="🇹🇭">🇹🇭 Thailand</option>
+                  <option value="🇯🇵">🇯🇵 Japan</option>
+                  <option value="🇺🇸">🇺🇸 USA</option>
+                  <option value="🇬🇧">🇬🇧 UK</option>
+                  <option value="🇦🇺">🇦🇺 Australia</option>
+                  <option value="🌐">🌐 Other</option>
+                </select>
+                <input type="text" id="player-nickname" placeholder="Nickname (e.g. Baller)" maxlength="12" autocomplete="off">
+              </div>
+              <button class="submit-score-btn" id="btn-submit-leaderboard">
+                SUBMIT SCORE 🏆
+              </button>
+            </div>
+
             <button class="modal-btn" id="modal-restart-btn">PLAY AGAIN 🏀</button>
+          </div>
+        </div>
+
+        <!-- Global Leaderboard Modal -->
+        <div class="modal-overlay" id="leaderboard-modal">
+          <div class="modal-card lb-modal-card">
+            <div class="modal-header lb-header">
+              <h2>GLOBAL LEADERBOARD 🏆</h2>
+              <button class="lb-close-btn" id="close-lb-btn">&times;</button>
+            </div>
+
+            <!-- Leaderboard Mode Tabs -->
+            <div class="lb-tabs">
+              <button class="lb-tab active" id="lb-tab-timer">⏱️ 60s Time Attack</button>
+              <button class="lb-tab" id="lb-tab-endless">♾️ Endless</button>
+            </div>
+
+            <!-- Leaderboard Table -->
+            <div class="lb-table-wrapper">
+              <table class="lb-table">
+                <thead>
+                  <tr>
+                    <th>RANK</th>
+                    <th>PLAYER</th>
+                    <th>SCORE</th>
+                    <th>ACCURACY</th>
+                  </tr>
+                </thead>
+                <tbody id="lb-table-body">
+                  <!-- Dynamically populated -->
+                </tbody>
+              </table>
+            </div>
+
+            <button class="modal-btn" id="lb-play-btn">PLAY NOW 🏀</button>
           </div>
         </div>
       </div>
