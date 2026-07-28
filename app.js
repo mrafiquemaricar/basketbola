@@ -1,7 +1,7 @@
 /**
  * Basketbola - Web & Mobile Basketball Arcade Game Engine
- * Features: Endless Mode vs 60s Time Attack Challenge, Global Leaderboard & Country Pickers,
- * 2PT & 3PT Shooting Spots, Touch & Haptics, Singapore MUIS Prayer Times, Web Audio.
+ * Features: 60s Time Attack Challenge vs Endless Mode, On-Canvas Timer Clock,
+ * Global Leaderboard & Country Pickers, 2PT & 3PT Shooting Spots, Web Audio.
  */
 
 (function () {
@@ -275,7 +275,7 @@
     { country: '🇲🇾', name: 'Penang_King', score: 84, accuracy: 84 }
   ];
 
-  let currentLbTab = 'timer'; // 'timer' or 'endless'
+  let currentLbTab = 'timer';
   let lastSubmittedId = null;
 
   function loadLeaderboard(mode) {
@@ -355,7 +355,6 @@
       accuracy: pct
     });
 
-    // Sort high to low by score
     list.sort((a, b) => b.score - a.score || b.accuracy - a.accuracy);
     const top15 = list.slice(0, 15);
     saveLeaderboard(mode, top15);
@@ -368,7 +367,6 @@
     if (leaderboardModal) leaderboardModal.classList.add('active');
   }
 
-  // Restore saved player identity if present
   const savedNick = localStorage.getItem('basketbola_last_nick');
   const savedCountry = localStorage.getItem('basketbola_last_country');
   if (savedNick && playerNicknameInput) playerNicknameInput.value = savedNick;
@@ -521,7 +519,7 @@
   };
 
   let state = {
-    gameMode: 'endless',
+    gameMode: 'timer', // 'timer' (60s Time Attack active by default!) or 'endless'
     score: 0,
     highScoreEndless: parseInt(localStorage.getItem('basketbola_highscore_endless') || '0', 10),
     highScoreTimer: parseInt(localStorage.getItem('basketbola_highscore_timer') || '0', 10),
@@ -538,6 +536,7 @@
     bannerTimeout: null,
     netSwishTimer: 0,
     touchStartY: 0,
+    // Time Attack Timer State
     timerSeconds: 60,
     timerActive: false,
     timerInterval: null,
@@ -600,9 +599,9 @@
   // --- Mode Switching & Reset Handlers ---
   function setGameMode(mode) {
     state.gameMode = mode;
-    modeEndlessBtn.classList.toggle('active', mode === 'endless');
-    modeTimerBtn.classList.toggle('active', mode === 'timer');
-    timerStatCard.style.display = mode === 'timer' ? 'flex' : 'none';
+    if (modeEndlessBtn) modeEndlessBtn.classList.toggle('active', mode === 'endless');
+    if (modeTimerBtn) modeTimerBtn.classList.toggle('active', mode === 'timer');
+    if (timerStatCard) timerStatCard.style.display = mode === 'timer' ? 'flex' : 'none';
 
     stopTimer();
     restartGame();
@@ -619,8 +618,8 @@
     state.isGameOver = false;
 
     stopTimer();
-    timerDisplay.textContent = '60s';
-    timerStatCard.classList.remove('timer-warning');
+    if (timerDisplay) timerDisplay.textContent = '60s';
+    if (timerStatCard) timerStatCard.classList.remove('timer-warning');
     if (gameOverModal) gameOverModal.classList.remove('active');
     if (leaderboardModal) leaderboardModal.classList.remove('active');
 
@@ -634,9 +633,9 @@
 
     state.timerInterval = setInterval(() => {
       state.timerSeconds--;
-      timerDisplay.textContent = `${state.timerSeconds}s`;
+      if (timerDisplay) timerDisplay.textContent = `${state.timerSeconds}s`;
 
-      if (state.timerSeconds <= 10) {
+      if (state.timerSeconds <= 10 && timerStatCard) {
         timerStatCard.classList.add('timer-warning');
       }
 
@@ -666,11 +665,11 @@
       localStorage.setItem('basketbola_highscore_timer', state.score.toString());
     }
 
-    modalScore.textContent = state.score;
+    if (modalScore) modalScore.textContent = state.score;
     const pct = state.shotsTaken > 0 ? Math.round((state.shotsMade / state.shotsTaken) * 100) : 0;
-    modalAccuracy.textContent = `${pct}%`;
-    modalShots.textContent = `${state.shotsMade}/${state.shotsTaken}`;
-    modalStreak.textContent = `${state.bestStreakSession} 🔥`;
+    if (modalAccuracy) modalAccuracy.textContent = `${pct}%`;
+    if (modalShots) modalShots.textContent = `${state.shotsMade}/${state.shotsTaken}`;
+    if (modalStreak) modalStreak.textContent = `${state.bestStreakSession} 🔥`;
 
     if (newRecordBadge) newRecordBadge.style.display = isNewRecord ? 'block' : 'none';
     if (gameOverModal) gameOverModal.classList.add('active');
@@ -738,6 +737,7 @@
     powerMeterWrapper.classList.add('charging');
     if (btnShoot) btnShoot.classList.add('active');
 
+    // Start timer countdown immediately when first shot charge begins!
     if (state.gameMode === 'timer' && !state.timerActive) {
       startTimer();
     }
@@ -991,6 +991,7 @@
     drawBasketball();
     drawParticles();
     drawAimGuideHud();
+    drawCanvasTimerHud(); // Prominent Timer HUD Overlay on Canvas!
   }
 
   function drawBackgroundStadium() {
@@ -1276,6 +1277,38 @@
     ctx.restore();
   }
 
+  function drawCanvasTimerHud() {
+    if (state.gameMode !== 'timer') return;
+
+    ctx.save();
+    const centerX = canvas.width / 2;
+    const topY = 40;
+
+    // Draw Clock Badge Container
+    ctx.fillStyle = 'rgba(10, 14, 26, 0.85)';
+    ctx.strokeStyle = state.timerSeconds <= 10 ? '#ff1744' : 'rgba(0, 229, 255, 0.4)';
+    ctx.lineWidth = 2;
+
+    ctx.beginPath();
+    ctx.roundRect(centerX - 130, topY - 24, 260, 48, 24);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    if (!state.timerActive && !state.isGameOver) {
+      ctx.fillStyle = '#ffbd00';
+      ctx.font = '800 14px Outfit, sans-serif';
+      ctx.fillText("⏱️ 60s TIMER - SHOOT TO START!", centerX, topY);
+    } else if (state.timerActive) {
+      ctx.fillStyle = state.timerSeconds <= 10 ? '#ff1744' : '#00e5ff';
+      ctx.font = '900 24px Orbitron, sans-serif';
+      ctx.fillText(`⏱️ 00:${padZero(state.timerSeconds)}`, centerX, topY);
+    }
+    ctx.restore();
+  }
+
   // --- Main Animation Loop ---
   function gameLoop() {
     updatePhysics();
@@ -1446,6 +1479,7 @@
 
   // Initial setup call
   setupEvents();
+  setGameMode('timer'); // Default to 60s Time Attack Challenge!
   updateScoreboardUI();
   resetBall();
 
