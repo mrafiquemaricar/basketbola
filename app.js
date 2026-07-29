@@ -1,6 +1,7 @@
 /**
  * Basketbola - Web & Mobile Basketball Arcade Game Engine
- * Features: Zero-Interruption Rapid-Fire Timer Challenge (No In-Game Text Popups),
+ * Features: Synchronous Deterministic Physics (Fixes Freeze/Hang Race Condition),
+ * Zero-Interruption Rapid-Fire Timer Challenge (No In-Game Text Popups),
  * Detailed Match Performance Breakdown (Swishes, Bank Shots, Rim Buckets, Misses & Airballs),
  * Expanded Hero Court Canvas, Collapsible Pull-Down Menu Drawer,
  * PeerJS WebRTC Real-Time 1v1 Private Room Engine with Deep-Link Auto-Join,
@@ -770,7 +771,8 @@
     timerSeconds: 60,
     timerActive: false,
     timerInterval: null,
-    isGameOver: false
+    isGameOver: false,
+    resetTimeout: null
   };
 
   // Ball Object
@@ -944,6 +946,11 @@
   }
 
   function resetBall() {
+    if (state.resetTimeout) {
+      clearTimeout(state.resetTimeout);
+      state.resetTimeout = null;
+    }
+
     const spot = SPOTS[state.currentSpotKey];
     ball.x = spot.x;
     ball.y = COURT.floorY - ball.radius - 10;
@@ -1113,7 +1120,7 @@
         ball.vx = ball.vx * 0.7;
         playBounceSound();
 
-        // ZERO DELAY: Reset ball immediately on floor contact so player can shoot continuously!
+        // Deterministic reset: Reset ball as soon as it bounces/settles on floor
         if (Math.abs(ball.vy) < 3 || ball.y >= COURT.floorY - 10) {
           handleShotFinished();
           break;
@@ -1152,6 +1159,7 @@
   }
 
   function handleScoreSuccess() {
+    if (ball.scored) return;
     ball.scored = true;
     const pts = SPOTS[state.currentSpotKey].points;
 
@@ -1181,7 +1189,7 @@
     createSwishParticles(COURT.hoopX - COURT.rimWidth / 2, COURT.hoopY + 10);
     triggerHaptic(50);
 
-    // Record Shot Breakdown Types (No active in-game text popup delay!)
+    // Record Shot Breakdown Types
     if (ball.hitBackboard && !ball.hitRim) {
       state.bankCount++;
       playSwishSound();
@@ -1195,21 +1203,16 @@
     }
 
     updateScoreboardUI();
-    
-    // Instant Reset (80ms to trigger net swish animation, ZERO waiting time!)
-    setTimeout(() => {
-      resetBall();
-    }, 80);
   }
 
   function handleShotFinished() {
-    if (ball.scored) return;
-
-    state.streak = 0;
-    if (!ball.hitRim && !ball.hitBackboard) {
-      state.airballCount++;
-    } else {
-      state.missCount++;
+    if (!ball.scored) {
+      state.streak = 0;
+      if (!ball.hitRim && !ball.hitBackboard) {
+        state.airballCount++;
+      } else {
+        state.missCount++;
+      }
     }
 
     updateScoreboardUI();
