@@ -90,7 +90,7 @@
 
     <!-- Main Game Area (Hero Court - Maximized Size) -->
     <main class="game-wrapper">
-      <!-- Expanded Canvas Container -->
+      <!-- Expanded Canvas Container (100% Unobstructed Court Floor) -->
       <div class="canvas-container" id="canvas-container">
         <canvas id="gameCanvas" width="1000" height="560"></canvas>
         
@@ -107,14 +107,6 @@
           <div class="v-player p2"><span id="v-p2-flag">🇲🇾</span> <span id="v-p2-name">OPPONENT</span>: <strong id="v-p2-score">0</strong></div>
         </div>
 
-        <!-- Power Meter Bar Overlay -->
-        <div class="power-meter-wrapper" id="power-meter-wrapper">
-          <div class="power-label">POWER</div>
-          <div class="power-meter-track">
-            <div class="power-meter-fill" id="power-meter-fill"></div>
-          </div>
-        </div>
-
         <!-- Shot Result Notification Banner -->
         <div class="shot-result-banner" id="shot-result-banner">
           <span class="result-text" id="result-text">SWISH! +3</span>
@@ -123,6 +115,14 @@
 
       <!-- Mobile & Touch Arcade Controller Deck -->
       <section class="touch-controller-deck">
+        <!-- Power Meter Bar Relocated to Controller Deck (Zero Canvas Overlap!) -->
+        <div class="power-meter-wrapper" id="power-meter-wrapper">
+          <div class="power-label">POWER</div>
+          <div class="power-meter-track">
+            <div class="power-meter-fill" id="power-meter-fill"></div>
+          </div>
+        </div>
+
         <div class="touch-row top-row">
           <button class="action-btn spot-btn" id="btn-toggle-spot" type="button">
             📍 <span id="spot-btn-label">Switch to 2PT</span>
