@@ -88,9 +88,9 @@
       </div>
     </header>
 
-    <!-- Main Game Area (Hero Court - Maximized Size) -->
+    <!-- Main Game Area (Hero Court - Maximized Size, Zero In-Game Popups) -->
     <main class="game-wrapper">
-      <!-- Expanded Canvas Container (100% Unobstructed Court Floor) -->
+      <!-- Expanded Canvas Container (100% Zero-Interruption Gameplay) -->
       <div class="canvas-container" id="canvas-container">
         <canvas id="gameCanvas" width="1000" height="560"></canvas>
         
@@ -106,16 +106,11 @@
           <div class="v-vs">VS</div>
           <div class="v-player p2"><span id="v-p2-flag">🇲🇾</span> <span id="v-p2-name">OPPONENT</span>: <strong id="v-p2-score">0</strong></div>
         </div>
-
-        <!-- Shot Result Notification Banner -->
-        <div class="shot-result-banner" id="shot-result-banner">
-          <span class="result-text" id="result-text">SWISH! +3</span>
-        </div>
       </div>
 
       <!-- Mobile & Touch Arcade Controller Deck -->
       <section class="touch-controller-deck">
-        <!-- Power Meter Bar Relocated to Controller Deck (Zero Canvas Overlap!) -->
+        <!-- Power Meter Bar Relocated to Controller Deck (Zero Canvas Floor Overlap!) -->
         <div class="power-meter-wrapper" id="power-meter-wrapper">
           <div class="power-label">POWER</div>
           <div class="power-meter-track">
@@ -206,12 +201,12 @@
 
   <!-- Fullscreen Fixed Modals -->
 
-  <!-- Game Over / Match End Modal Overlay -->
+  <!-- Game Over / Match End Modal Overlay with Detailed Performance Breakdown -->
   <div class="modal-overlay" id="game-over-modal">
     <div class="modal-card">
       <div class="modal-header">
         <h2 id="modal-title-text">TIME'S UP! ⏱️</h2>
-        <p id="modal-subtitle-text">60-Second Challenge Complete</p>
+        <p id="modal-subtitle-text">60-Second Rapid Challenge Complete</p>
       </div>
       
       <div class="modal-stats">
@@ -230,6 +225,18 @@
         <div class="m-stat">
           <span class="m-label">BEST STREAK</span>
           <span class="m-val" id="modal-streak">0 🔥</span>
+        </div>
+      </div>
+
+      <!-- Match Performance Breakdown Grid (Misses, Goals, Swishes & Airballs) -->
+      <div class="modal-breakdown-box" id="modal-breakdown-box">
+        <div class="bd-title">MATCH SHOT BREAKDOWN 📊</div>
+        <div class="bd-grid">
+          <div class="bd-chip swish"><span class="bd-icon">✨</span> Swishes: <strong id="bd-swishes">0</strong></div>
+          <div class="bd-chip bank"><span class="bd-icon">🏦</span> Bank Shots: <strong id="bd-banks">0</strong></div>
+          <div class="bd-chip bucket"><span class="bd-icon">🎯</span> Rim Buckets: <strong id="bd-rim-buckets">0</strong></div>
+          <div class="bd-chip miss"><span class="bd-icon">❌</span> Misses: <strong id="bd-misses">0</strong></div>
+          <div class="bd-chip airball"><span class="bd-icon">💨</span> Airballs: <strong id="bd-airballs">0</strong></div>
         </div>
       </div>
 

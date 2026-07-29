@@ -1,6 +1,7 @@
 /**
  * Basketbola - Web & Mobile Basketball Arcade Game Engine
- * Features: Rapid-Fire Zero-Delay Shooting Engine, Floating Non-Blocking Toast HUD,
+ * Features: Zero-Interruption Rapid-Fire Timer Challenge (No In-Game Text Popups),
+ * Detailed Match Performance Breakdown (Swishes, Bank Shots, Rim Buckets, Misses & Airballs),
  * Expanded Hero Court Canvas, Collapsible Pull-Down Menu Drawer,
  * PeerJS WebRTC Real-Time 1v1 Private Room Engine with Deep-Link Auto-Join,
  * Live Online Presence Badge, 60s Time Attack Challenge vs Endless Mode,
@@ -26,8 +27,6 @@
   const spotBtnLabel = document.getElementById('spot-btn-label');
   const powerMeterWrapper = document.getElementById('power-meter-wrapper');
   const powerMeterFill = document.getElementById('power-meter-fill');
-  const shotResultBanner = document.getElementById('shot-result-banner');
-  const resultText = document.getElementById('result-text');
   const angleDisplay = document.getElementById('angle-display');
   const soundToggleBtn = document.getElementById('sound-toggle-btn');
   const soundIcon = document.getElementById('sound-icon');
@@ -63,7 +62,7 @@
   const vP2Flag = document.getElementById('v-p2-flag');
   const onlineCountText = document.getElementById('online-count-text');
 
-  // Game Over Modal DOM
+  // Game Over Modal & Breakdown DOM
   const gameOverModal = document.getElementById('game-over-modal');
   const modalTitleText = document.getElementById('modal-title-text');
   const modalSubtitleText = document.getElementById('modal-subtitle-text');
@@ -71,6 +70,11 @@
   const modalAccuracy = document.getElementById('modal-accuracy');
   const modalShots = document.getElementById('modal-shots');
   const modalStreak = document.getElementById('modal-streak');
+  const bdSwishes = document.getElementById('bd-swishes');
+  const bdBanks = document.getElementById('bd-banks');
+  const bdRimBuckets = document.getElementById('bd-rim-buckets');
+  const bdMisses = document.getElementById('bd-misses');
+  const bdAirballs = document.getElementById('bd-airballs');
   const newRecordBadge = document.getElementById('new-record-badge');
   const modalRestartBtn = document.getElementById('modal-restart-btn');
 
@@ -450,7 +454,6 @@
     if (opponentStatCard) opponentStatCard.style.display = 'inline-block';
     if (opponentScoreDisplay) opponentScoreDisplay.textContent = '0';
 
-    showResultBanner(`MATCH CONNECTED! ⚔️`, 'swish');
     triggerHaptic(60);
 
     setGameMode('mp');
@@ -583,7 +586,6 @@
     saveLeaderboard(mode, top15);
 
     triggerHaptic(60);
-    showResultBanner('SCORE SUBMITTED! 🏆', 'swish');
 
     if (gameOverModal) gameOverModal.classList.remove('active');
     renderLeaderboardTable(mode);
@@ -749,13 +751,20 @@
     bestStreakSession: 0,
     shotsTaken: 0,
     shotsMade: 0,
+
+    // Detailed Performance Shot Statistics (Reported at end of match)
+    swishCount: 0,
+    bankCount: 0,
+    rimBucketCount: 0,
+    missCount: 0,
+    airballCount: 0,
+
     currentSpotKey: '3pt',
     angle: 52,
     power: 0,
     powerDirection: 1.6,
     isCharging: false,
     soundOn: true,
-    bannerTimeout: null,
     netSwishTimer: 0,
     touchStartY: 0,
     timerSeconds: 60,
@@ -838,6 +847,14 @@
     state.bestStreakSession = 0;
     state.shotsTaken = 0;
     state.shotsMade = 0;
+
+    // Reset Detailed Match Performance Statistics
+    state.swishCount = 0;
+    state.bankCount = 0;
+    state.rimBucketCount = 0;
+    state.missCount = 0;
+    state.airballCount = 0;
+
     state.timerSeconds = 60;
     state.timerActive = false;
     state.isGameOver = false;
@@ -898,7 +915,7 @@
       if (modalSubtitleText) modalSubtitleText.textContent = won ? `You defeated ${multiplayerState.opponentName}!` : `Good battle against ${multiplayerState.opponentName}!`;
     } else {
       if (modalTitleText) modalTitleText.textContent = "TIME'S UP! ⏱️";
-      if (modalSubtitleText) modalSubtitleText.textContent = "60-Second Challenge Complete";
+      if (modalSubtitleText) modalSubtitleText.textContent = "60-Second Rapid Challenge Complete";
     }
 
     const isNewRecord = state.score > state.highScoreTimer && state.score > 0;
@@ -912,6 +929,13 @@
     if (modalAccuracy) modalAccuracy.textContent = `${pct}%`;
     if (modalShots) modalShots.textContent = `${state.shotsMade}/${state.shotsTaken}`;
     if (modalStreak) modalStreak.textContent = `${state.bestStreakSession} 🔥`;
+
+    // Populate Detailed End-of-Match Breakdown Grid
+    if (bdSwishes) bdSwishes.textContent = state.swishCount;
+    if (bdBanks) bdBanks.textContent = state.bankCount;
+    if (bdRimBuckets) bdRimBuckets.textContent = state.rimBucketCount;
+    if (bdMisses) bdMisses.textContent = state.missCount;
+    if (bdAirballs) bdAirballs.textContent = state.airballCount;
 
     if (newRecordBadge) newRecordBadge.style.display = isNewRecord ? 'block' : 'none';
     if (gameOverModal) gameOverModal.classList.add('active');
@@ -1089,7 +1113,7 @@
         ball.vx = ball.vx * 0.7;
         playBounceSound();
 
-        // INSTANT RAPID FIRE: Reset ball as soon as it bounces once or hits floor!
+        // ZERO DELAY: Reset ball immediately on floor contact so player can shoot continuously!
         if (Math.abs(ball.vy) < 3 || ball.y >= COURT.floorY - 10) {
           handleShotFinished();
           break;
@@ -1157,24 +1181,25 @@
     createSwishParticles(COURT.hoopX - COURT.rimWidth / 2, COURT.hoopY + 10);
     triggerHaptic(50);
 
+    // Record Shot Breakdown Types (No active in-game text popup delay!)
     if (ball.hitBackboard && !ball.hitRim) {
-      showResultBanner(`BANK SHOT! +${pts}`, 'swish');
+      state.bankCount++;
       playSwishSound();
     } else if (!ball.hitRim) {
-      showResultBanner(`SWISH! +${pts}`, 'swish');
+      state.swishCount++;
       playSwishSound();
       playCheerSound();
     } else {
-      showResultBanner(`BUCKET! +${pts}`, 'swish');
+      state.rimBucketCount++;
       playSwishSound();
     }
 
     updateScoreboardUI();
     
-    // Rapid Fire Instant Reset (120ms so particles start, but player never waits!)
+    // Instant Reset (80ms to trigger net swish animation, ZERO waiting time!)
     setTimeout(() => {
       resetBall();
-    }, 120);
+    }, 80);
   }
 
   function handleShotFinished() {
@@ -1182,24 +1207,13 @@
 
     state.streak = 0;
     if (!ball.hitRim && !ball.hitBackboard) {
-      showResultBanner('AIRBALL!', 'miss');
+      state.airballCount++;
     } else {
-      showResultBanner('MISSED!', 'miss');
+      state.missCount++;
     }
 
     updateScoreboardUI();
     resetBall();
-  }
-
-  // Non-blocking Floating Toast Notification (Zero Court View Interruption!)
-  function showResultBanner(text, type) {
-    if (state.bannerTimeout) clearTimeout(state.bannerTimeout);
-    resultText.textContent = text;
-    shotResultBanner.className = `shot-result-banner show ${type}`;
-
-    state.bannerTimeout = setTimeout(() => {
-      shotResultBanner.className = 'shot-result-banner';
-    }, 900);
   }
 
   function updateScoreboardUI() {
@@ -1669,10 +1683,9 @@
       btnCopyRoomLink.addEventListener('click', () => {
         const inviteUrl = `${window.location.origin}${window.location.pathname}?room=${multiplayerState.code || '8492'}`;
         navigator.clipboard.writeText(inviteUrl).then(() => {
-          showResultBanner("LINK COPIED! 📋", "swish");
           triggerHaptic(40);
         }).catch(() => {
-          showResultBanner(`CODE: ${multiplayerState.code}`, "swish");
+          // ignore
         });
       });
     }

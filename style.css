@@ -327,7 +327,7 @@ body {
   color: var(--accent-gold);
 }
 
-/* Expanded Hero Canvas Area (100% Unobstructed Floor) */
+/* Expanded Hero Canvas Area (100% Unobstructed Floor, Zero In-Game Popups) */
 .game-wrapper {
   display: flex;
   flex-direction: column;
@@ -441,41 +441,6 @@ canvas {
   width: 0%;
   background: linear-gradient(90deg, #00e676 0%, #ffbd00 60%, #ff1744 100%);
   border-radius: 6px;
-}
-
-/* Non-blocking Floating Toast Popup (Zero Court Interruption!) */
-.shot-result-banner {
-  position: absolute;
-  bottom: 12px;
-  left: 12px;
-  top: auto;
-  transform: translateY(10px);
-  background: rgba(10, 14, 26, 0.88);
-  backdrop-filter: blur(10px);
-  border: 1px solid var(--accent-green);
-  border-radius: 20px;
-  padding: 4px 14px;
-  opacity: 0;
-  pointer-events: none;
-  transition: all 0.22s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  z-index: 25;
-}
-
-.shot-result-banner.show {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.shot-result-banner.miss {
-  border-color: #ff1744;
-}
-
-.shot-result-banner .result-text {
-  font-family: var(--font-arcade);
-  font-size: 0.85rem;
-  font-weight: 800;
-  color: #fff;
-  text-align: center;
 }
 
 /* Touch Arcade Controller Deck */
@@ -693,6 +658,55 @@ canvas {
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
+
+/* Match Performance Breakdown Box inside Game Over Modal */
+.modal-breakdown-box {
+  background: rgba(10, 13, 24, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-md);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bd-title {
+  font-family: var(--font-arcade);
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--accent-gold);
+  letter-spacing: 1px;
+}
+
+.bd-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+}
+
+.bd-chip {
+  background: rgba(20, 26, 46, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-sm);
+  padding: 6px 8px;
+  font-size: 0.72rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--text-muted);
+}
+
+.bd-chip strong {
+  font-family: var(--font-arcade);
+  font-size: 0.85rem;
+  color: #fff;
+}
+
+.bd-chip.swish strong { color: var(--accent-green); }
+.bd-chip.bank strong { color: var(--accent-cyan); }
+.bd-chip.bucket strong { color: var(--accent-gold); }
+.bd-chip.miss strong { color: #ff1744; }
+.bd-chip.airball strong { color: #b0bec5; }
 
 /* Fullscreen Fixed Modals */
 .modal-overlay {
