@@ -1,6 +1,7 @@
 /**
  * Basketbola - Web & Mobile Basketball Arcade Game Engine
- * Features: Bulletproof Instant Net-Pass Reset (Fixes Post-Score Freeze/Hang),
+ * Features: Fail-Safe Instant Scoring Engine (Guarantees Zero Freezes/Hangs),
+ * Global Window Touch Release (Prevents Stuck Power Charging),
  * Zero-Interruption Rapid-Fire Timer Challenge (No In-Game Text Popups),
  * Detailed Match Performance Breakdown (Swishes, Bank Shots, Rim Buckets, Misses & Airballs),
  * Expanded Hero Court Canvas, Collapsible Pull-Down Menu Drawer,
@@ -122,19 +123,23 @@
   const btnAngleUp = document.getElementById('btn-angle-up');
   const btnShoot = document.getElementById('btn-shoot');
 
-  // --- Sound Effects Synthesizer (Web Audio API) ---
+  // --- Sound Effects Synthesizer (Web Audio API - Fail-Safe Wrapped) ---
   let soundEnabled = true;
   let audioCtx = null;
 
   function initAudio() {
-    if (!audioCtx) {
-      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-      if (AudioContextClass) {
-        audioCtx = new AudioContextClass();
+    try {
+      if (!audioCtx) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) {
+          audioCtx = new AudioContextClass();
+        }
       }
-    }
-    if (audioCtx && audioCtx.state === 'suspended') {
-      audioCtx.resume();
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    } catch (e) {
+      console.warn("Audio init warning:", e);
     }
   }
 
@@ -995,7 +1000,7 @@
   function startCharging() {
     if (state.isGameOver) return;
     
-    // Auto-reset ball if player charges next shot immediately (Rapid-Fire Zero Lock!)
+    // Auto-reset ball if player charges next shot immediately
     if (ball.inAir) {
       resetBall();
     }
@@ -1110,15 +1115,10 @@
         ball.x < rimBack.x - 5
       ) {
         handleScoreSuccess();
-      }
-
-      // Instant Reset: Once a bucket is scored and drops past the net, reset ball immediately!
-      if (ball.scored && ball.y >= COURT.hoopY + 30) {
-        handleShotFinished();
         break;
       }
 
-      // Reset immediately on first floor bounce or when out of bounds
+      // Reset immediately on floor contact or out of bounds
       if (ball.y + ball.radius >= COURT.floorY) {
         ball.y = COURT.floorY - ball.radius;
         playBounceSound();
@@ -1202,6 +1202,9 @@
     }
 
     updateScoreboardUI();
+
+    // FAIL-SAFE INSTANT RESET: Immediately reset ball to shooter hand so player can shoot continuously!
+    handleShotFinished();
   }
 
   function handleShotFinished() {
@@ -1601,6 +1604,19 @@
 
   // --- Event Listeners & Keyboard / Touch Bindings ---
   function setupEvents() {
+    // Global Fail-Safe Window Release Listeners (Guarantees Release Shot Never Gets Stuck)
+    window.addEventListener('mouseup', () => {
+      if (state.isCharging) releaseShot();
+    });
+
+    window.addEventListener('touchend', () => {
+      if (state.isCharging) releaseShot();
+    });
+
+    window.addEventListener('touchcancel', () => {
+      if (state.isCharging) releaseShot();
+    });
+
     // Collapsible Pull-Down Menu Drawer Toggle
     const pullMenuBtn = document.getElementById('pull-menu-btn');
     const expandedDrawer = document.getElementById('app-expanded-drawer');
