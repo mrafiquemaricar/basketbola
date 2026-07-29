@@ -1,7 +1,7 @@
 /**
  * Basketbola - Web & Mobile Basketball Arcade Game Engine
- * Features: Fail-Safe Instant Scoring Engine (Guarantees Zero Freezes/Hangs),
- * Global Window Touch Release (Prevents Stuck Power Charging),
+ * Features: Fail-Safe Net Scoring & 2.5s Shot Safety Guarantee (Fixes Stuck Rim & Freezes),
+ * Widened Net-Pass Collision Box, Global Window Touch Release (Prevents Stuck Charging),
  * Zero-Interruption Rapid-Fire Timer Challenge (No In-Game Text Popups),
  * Detailed Match Performance Breakdown (Swishes, Bank Shots, Rim Buckets, Misses & Airballs),
  * Expanded Hero Court Canvas, Collapsible Pull-Down Menu Drawer,
@@ -123,7 +123,7 @@
   const btnAngleUp = document.getElementById('btn-angle-up');
   const btnShoot = document.getElementById('btn-shoot');
 
-  // --- Sound Effects Synthesizer (Web Audio API - Fail-Safe Wrapped) ---
+  // --- Sound Effects Synthesizer ---
   let soundEnabled = true;
   let audioCtx = null;
 
@@ -776,7 +776,8 @@
     timerSeconds: 60,
     timerActive: false,
     timerInterval: null,
-    isGameOver: false
+    isGameOver: false,
+    safetyTimer: null
   };
 
   // Ball Object
@@ -948,6 +949,11 @@
   }
 
   function resetBall() {
+    if (state.safetyTimer) {
+      clearTimeout(state.safetyTimer);
+      state.safetyTimer = null;
+    }
+
     const spot = SPOTS[state.currentSpotKey];
     ball.x = spot.x;
     ball.y = COURT.floorY - ball.radius - 10;
@@ -1043,6 +1049,14 @@
     ball.hitBackboard = false;
     ball.prevY = ball.y;
 
+    // Hard Safety Timer: Force reset ball if stuck in mid-air for > 2.5 seconds!
+    if (state.safetyTimer) clearTimeout(state.safetyTimer);
+    state.safetyTimer = setTimeout(() => {
+      if (ball.inAir) {
+        handleShotFinished();
+      }
+    }, 2500);
+
     state.shotsTaken++;
     updateScoreboardUI();
   }
@@ -1106,13 +1120,14 @@
       checkRimPointCollision(rimFront);
       checkRimPointCollision(rimBack);
 
+      // Widened & Ultra-Accurate Net Score Detection Box
       if (
         !ball.scored &&
         ball.vy > 0 &&
         ball.prevY < COURT.hoopY &&
         ball.y >= COURT.hoopY &&
-        ball.x > rimFront.x + 5 &&
-        ball.x < rimBack.x - 5
+        ball.x >= rimFront.x - 2 &&
+        ball.x <= rimBack.x + 2
       ) {
         handleScoreSuccess();
         break;
@@ -1604,7 +1619,7 @@
 
   // --- Event Listeners & Keyboard / Touch Bindings ---
   function setupEvents() {
-    // Global Fail-Safe Window Release Listeners (Guarantees Release Shot Never Gets Stuck)
+    // Global Fail-Safe Window Release Listeners
     window.addEventListener('mouseup', () => {
       if (state.isCharging) releaseShot();
     });
