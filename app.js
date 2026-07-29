@@ -1,6 +1,6 @@
 /**
  * Basketbola - Web & Mobile Basketball Arcade Game Engine
- * Features: Synchronous Deterministic Physics (Fixes Freeze/Hang Race Condition),
+ * Features: Bulletproof Instant Net-Pass Reset (Fixes Post-Score Freeze/Hang),
  * Zero-Interruption Rapid-Fire Timer Challenge (No In-Game Text Popups),
  * Detailed Match Performance Breakdown (Swishes, Bank Shots, Rim Buckets, Misses & Airballs),
  * Expanded Hero Court Canvas, Collapsible Pull-Down Menu Drawer,
@@ -753,7 +753,7 @@
     shotsTaken: 0,
     shotsMade: 0,
 
-    // Detailed Performance Shot Statistics (Reported at end of match)
+    // Detailed Performance Shot Statistics
     swishCount: 0,
     bankCount: 0,
     rimBucketCount: 0,
@@ -771,8 +771,7 @@
     timerSeconds: 60,
     timerActive: false,
     timerInterval: null,
-    isGameOver: false,
-    resetTimeout: null
+    isGameOver: false
   };
 
   // Ball Object
@@ -850,7 +849,6 @@
     state.shotsTaken = 0;
     state.shotsMade = 0;
 
-    // Reset Detailed Match Performance Statistics
     state.swishCount = 0;
     state.bankCount = 0;
     state.rimBucketCount = 0;
@@ -932,7 +930,6 @@
     if (modalShots) modalShots.textContent = `${state.shotsMade}/${state.shotsTaken}`;
     if (modalStreak) modalStreak.textContent = `${state.bestStreakSession} 🔥`;
 
-    // Populate Detailed End-of-Match Breakdown Grid
     if (bdSwishes) bdSwishes.textContent = state.swishCount;
     if (bdBanks) bdBanks.textContent = state.bankCount;
     if (bdRimBuckets) bdRimBuckets.textContent = state.rimBucketCount;
@@ -946,11 +943,6 @@
   }
 
   function resetBall() {
-    if (state.resetTimeout) {
-      clearTimeout(state.resetTimeout);
-      state.resetTimeout = null;
-    }
-
     const spot = SPOTS[state.currentSpotKey];
     ball.x = spot.x;
     ball.y = COURT.floorY - ball.radius - 10;
@@ -969,7 +961,7 @@
   }
 
   function setSpot(spotKey) {
-    if (ball.inAir || state.isGameOver) return;
+    if (state.isGameOver) return;
     state.currentSpotKey = spotKey;
     const spot = SPOTS[spotKey];
     
@@ -993,7 +985,7 @@
   }
 
   function setAngle(delta) {
-    if (ball.inAir || state.isGameOver) return;
+    if (state.isGameOver) return;
     state.angle = Math.max(30, Math.min(80, state.angle + delta));
     angleDisplay.textContent = `${state.angle}°`;
     triggerHaptic(10);
@@ -1001,7 +993,13 @@
 
   // --- Rapid-Fire Shooting Mechanics ---
   function startCharging() {
-    if (ball.inAir || state.isCharging || state.isGameOver) return;
+    if (state.isGameOver) return;
+    
+    // Auto-reset ball if player charges next shot immediately (Rapid-Fire Zero Lock!)
+    if (ball.inAir) {
+      resetBall();
+    }
+
     initAudio();
     triggerHaptic(20);
     state.isCharging = true;
@@ -1016,7 +1014,7 @@
   }
 
   function releaseShot() {
-    if (!state.isCharging || ball.inAir || state.isGameOver) return;
+    if (!state.isCharging || state.isGameOver) return;
 
     state.isCharging = false;
     powerMeterWrapper.classList.remove('charging');
@@ -1114,17 +1112,18 @@
         handleScoreSuccess();
       }
 
+      // Instant Reset: Once a bucket is scored and drops past the net, reset ball immediately!
+      if (ball.scored && ball.y >= COURT.hoopY + 30) {
+        handleShotFinished();
+        break;
+      }
+
+      // Reset immediately on first floor bounce or when out of bounds
       if (ball.y + ball.radius >= COURT.floorY) {
         ball.y = COURT.floorY - ball.radius;
-        ball.vy = -ball.vy * 0.5;
-        ball.vx = ball.vx * 0.7;
         playBounceSound();
-
-        // Deterministic reset: Reset ball as soon as it bounces/settles on floor
-        if (Math.abs(ball.vy) < 3 || ball.y >= COURT.floorY - 10) {
-          handleShotFinished();
-          break;
-        }
+        handleShotFinished();
+        break;
       }
 
       if (ball.x > canvas.width + 50 || ball.x < -50 || ball.y > canvas.height + 50) {
