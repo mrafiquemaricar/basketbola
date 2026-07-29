@@ -1,6 +1,7 @@
 /**
  * Basketbola - Web & Mobile Basketball Arcade Game Engine
- * Features: Expanded Hero Court Canvas, Collapsible Pull-Down Menu Drawer,
+ * Features: Rapid-Fire Zero-Delay Shooting Engine, Floating Non-Blocking Toast HUD,
+ * Expanded Hero Court Canvas, Collapsible Pull-Down Menu Drawer,
  * PeerJS WebRTC Real-Time 1v1 Private Room Engine with Deep-Link Auto-Join,
  * Live Online Presence Badge, 60s Time Attack Challenge vs Endless Mode,
  * Canvas Timer & Versus HUD, Global Leaderboard, Singapore MUIS Prayer Times.
@@ -967,7 +968,7 @@
     triggerHaptic(10);
   }
 
-  // --- Shooting Mechanics ---
+  // --- Rapid-Fire Shooting Mechanics ---
   function startCharging() {
     if (ball.inAir || state.isCharging || state.isGameOver) return;
     initAudio();
@@ -1088,10 +1089,9 @@
         ball.vx = ball.vx * 0.7;
         playBounceSound();
 
-        if (Math.abs(ball.vy) < 1 && Math.abs(ball.vx) < 1) {
-          setTimeout(() => {
-            if (ball.inAir) handleShotFinished();
-          }, 400);
+        // INSTANT RAPID FIRE: Reset ball as soon as it bounces once or hits floor!
+        if (Math.abs(ball.vy) < 3 || ball.y >= COURT.floorY - 10) {
+          handleShotFinished();
           break;
         }
       }
@@ -1170,9 +1170,11 @@
     }
 
     updateScoreboardUI();
+    
+    // Rapid Fire Instant Reset (120ms so particles start, but player never waits!)
     setTimeout(() => {
       resetBall();
-    }, 1200);
+    }, 120);
   }
 
   function handleShotFinished() {
@@ -1189,6 +1191,7 @@
     resetBall();
   }
 
+  // Non-blocking Floating Toast Notification (Zero Court View Interruption!)
   function showResultBanner(text, type) {
     if (state.bannerTimeout) clearTimeout(state.bannerTimeout);
     resultText.textContent = text;
@@ -1196,7 +1199,7 @@
 
     state.bannerTimeout = setTimeout(() => {
       shotResultBanner.className = 'shot-result-banner';
-    }, 1500);
+    }, 900);
   }
 
   function updateScoreboardUI() {
