@@ -1225,11 +1225,11 @@
 
     updateScoreboardUI();
 
-    // 120ms reset delay to let net swish animation render smoothly before ball returns to hand
+    // 160ms reset delay to let net swish animation render smoothly before ball returns to hand
     if (state.scoreResetTimeout) clearTimeout(state.scoreResetTimeout);
     state.scoreResetTimeout = setTimeout(() => {
       handleShotFinished();
-    }, 120);
+    }, 160);
   }
 
   function handleShotFinished() {
