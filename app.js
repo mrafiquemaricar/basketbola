@@ -1,6 +1,7 @@
 /**
  * Basketbola - Web & Mobile Basketball Arcade Game Engine
- * Features: Fail-Safe Net Scoring & 2.5s Shot Safety Guarantee (Fixes Stuck Rim & Freezes),
+ * Features: Smooth 100ms Post-Score Swish Reset (Adjusted from Instant to 100ms for Perfect Visual Swish Timing),
+ * Fail-Safe Net Scoring & 2.5s Shot Safety Guarantee (Fixes Stuck Rim & Freezes),
  * Widened Net-Pass Collision Box, Global Window Touch Release (Prevents Stuck Charging),
  * Zero-Interruption Rapid-Fire Timer Challenge (No In-Game Text Popups),
  * Detailed Match Performance Breakdown (Swishes, Bank Shots, Rim Buckets, Misses & Airballs),
@@ -777,7 +778,8 @@
     timerActive: false,
     timerInterval: null,
     isGameOver: false,
-    safetyTimer: null
+    safetyTimer: null,
+    scoreResetTimeout: null
   };
 
   // Ball Object
@@ -952,6 +954,11 @@
     if (state.safetyTimer) {
       clearTimeout(state.safetyTimer);
       state.safetyTimer = null;
+    }
+
+    if (state.scoreResetTimeout) {
+      clearTimeout(state.scoreResetTimeout);
+      state.scoreResetTimeout = null;
     }
 
     const spot = SPOTS[state.currentSpotKey];
@@ -1218,8 +1225,11 @@
 
     updateScoreboardUI();
 
-    // FAIL-SAFE INSTANT RESET: Immediately reset ball to shooter hand so player can shoot continuously!
-    handleShotFinished();
+    // 100ms reset delay to let net swish animation render smoothly before ball returns to hand
+    if (state.scoreResetTimeout) clearTimeout(state.scoreResetTimeout);
+    state.scoreResetTimeout = setTimeout(() => {
+      handleShotFinished();
+    }, 100);
   }
 
   function handleShotFinished() {
