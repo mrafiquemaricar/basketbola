@@ -765,6 +765,12 @@ canvas {
   background: #1c233a; border: 1px solid rgba(255, 255, 255, 0.15);
   color: #fff; border-radius: var(--radius-sm); padding: 6px 8px; font-size: 0.8rem;
 }
+.form-inputs select optgroup {
+  background: #121729; color: var(--accent-gold); font-weight: 800; font-style: normal;
+}
+.form-inputs select option {
+  background: #1c233a; color: #ffffff;
+}
 
 .submit-score-btn {
   background: rgba(255, 189, 0, 0.2); border: 1px solid var(--accent-gold);
