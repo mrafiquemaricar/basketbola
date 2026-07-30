@@ -1,10 +1,9 @@
 /**
  * Basketbola - Web & Mobile Basketball Arcade Game Engine
- * Features: Smooth 100ms Post-Score Swish Reset (Adjusted from Instant to 100ms for Perfect Visual Swish Timing),
- * Fail-Safe Net Scoring & 2.5s Shot Safety Guarantee (Fixes Stuck Rim & Freezes),
- * Widened Net-Pass Collision Box, Global Window Touch Release (Prevents Stuck Charging),
- * Zero-Interruption Rapid-Fire Timer Challenge (No In-Game Text Popups),
- * Detailed Match Performance Breakdown (Swishes, Bank Shots, Rim Buckets, Misses & Airballs),
+ * Features: Fast Punchy Arcade Ball Velocity (Faster arc), 350ms Post-Score Swish Reset (Fixes Bank Shots),
+ * Removed Confetti Particles -> Replaced with High-Octane Floating Energy Score Popups ("+3 PTS!", "BANK SHOT! 🏦"),
+ * Neon Rim Aura Glow, Fail-Safe Net Scoring & 2.5s Shot Safety Guarantee,
+ * Global Window Touch Release (Prevents Stuck Charging),
  * Expanded Hero Court Canvas, Collapsible Pull-Down Menu Drawer,
  * PeerJS WebRTC Real-Time 1v1 Private Room Engine with Deep-Link Auto-Join,
  * Live Online Presence Badge, 60s Time Attack Challenge vs Endless Mode,
@@ -164,8 +163,8 @@
       const gain = audioCtx.createGain();
       
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(140, audioCtx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.12);
+      osc.frequency.setValueAtTime(160, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(35, audioCtx.currentTime + 0.12);
 
       gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.12);
@@ -193,10 +192,10 @@
       osc1.type = 'triangle';
       osc2.type = 'sine';
 
-      osc1.frequency.setValueAtTime(440, audioCtx.currentTime);
-      osc2.frequency.setValueAtTime(880, audioCtx.currentTime);
+      osc1.frequency.setValueAtTime(460, audioCtx.currentTime);
+      osc2.frequency.setValueAtTime(920, audioCtx.currentTime);
 
-      gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+      gain.gain.setValueAtTime(0.35, audioCtx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.18);
 
       osc1.connect(gain);
@@ -230,12 +229,12 @@
 
       const filter = audioCtx.createBiquadFilter();
       filter.type = 'bandpass';
-      filter.frequency.setValueAtTime(1200, audioCtx.currentTime);
-      filter.Q.setValueAtTime(3.0, audioCtx.currentTime);
+      filter.frequency.setValueAtTime(1400, audioCtx.currentTime);
+      filter.Q.setValueAtTime(3.2, audioCtx.currentTime);
 
       const gain = audioCtx.createGain();
       gain.gain.setValueAtTime(0.01, audioCtx.currentTime);
-      gain.gain.linearRampToValueAtTime(0.5, audioCtx.currentTime + 0.05);
+      gain.gain.linearRampToValueAtTime(0.55, audioCtx.currentTime + 0.05);
       gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
 
       whiteNoise.connect(filter);
@@ -259,11 +258,11 @@
       const gain = audioCtx.createGain();
 
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
-      osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.08);
-      osc.frequency.setValueAtTime(783.99, audioCtx.currentTime + 0.16);
+      osc.frequency.setValueAtTime(587.33, audioCtx.currentTime);
+      osc.frequency.setValueAtTime(739.99, audioCtx.currentTime + 0.08);
+      osc.frequency.setValueAtTime(880.00, audioCtx.currentTime + 0.16);
 
-      gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+      gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
 
       osc.connect(gain);
@@ -801,37 +800,40 @@
   const rimFront = { x: COURT.hoopX - COURT.rimWidth, y: COURT.hoopY };
   const rimBack = { x: COURT.hoopX, y: COURT.hoopY };
 
-  let particles = [];
+  // High-Octane Arcade Floating Score Popups (Replaces Confetti)
+  let floatingTexts = [];
 
-  function createSwishParticles(x, y) {
-    particles = [];
-    const colors = ['#00e676', '#00e5ff', '#ffbd00', '#ff6b00', '#ffffff'];
-    for (let i = 0; i < 35; i++) {
-      const angle = Math.random() * Math.PI * 2;
-      const speed = 2 + Math.random() * 6;
-      particles.push({
-        x: x,
-        y: y,
-        vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed - 1,
-        radius: 2 + Math.random() * 4,
-        color: colors[Math.floor(Math.random() * colors.length)],
-        life: 1.0,
-        decay: 0.02 + Math.random() * 0.03
-      });
-    }
+  function addFloatingScoreText(text, color, x, y) {
+    floatingTexts.push({
+      text: text,
+      color: color,
+      x: x,
+      y: y,
+      vy: -1.6,
+      life: 1.0,
+      decay: 0.022
+    });
   }
 
-  function updateParticles() {
-    for (let i = particles.length - 1; i >= 0; i--) {
-      const p = particles[i];
-      p.x += p.vx;
-      p.y += p.vy;
-      p.vy += 0.15;
-      p.life -= p.decay;
-      if (p.life <= 0) {
-        particles.splice(i, 1);
+  function updateAndDrawFloatingTexts() {
+    for (let i = floatingTexts.length - 1; i >= 0; i--) {
+      const ft = floatingTexts[i];
+      ft.y += ft.vy;
+      ft.life -= ft.decay;
+      if (ft.life <= 0) {
+        floatingTexts.splice(i, 1);
+        continue;
       }
+
+      ctx.save();
+      ctx.globalAlpha = ft.life;
+      ctx.font = '900 18px Orbitron, sans-serif';
+      ctx.fillStyle = ft.color;
+      ctx.textAlign = 'center';
+      ctx.shadowColor = ft.color;
+      ctx.shadowBlur = 14;
+      ctx.fillText(ft.text, ft.x, ft.y);
+      ctx.restore();
     }
   }
 
@@ -873,6 +875,7 @@
     if (gameOverModal) gameOverModal.classList.remove('active');
     if (leaderboardModal) leaderboardModal.classList.remove('active');
 
+    floatingTexts = [];
     updateScoreboardUI();
     resetBall();
   }
@@ -1009,7 +1012,7 @@
     triggerHaptic(10);
   }
 
-  // --- Rapid-Fire Shooting Mechanics ---
+  // --- Rapid-Fire Punchy Arcade Shooting Mechanics ---
   function startCharging() {
     if (state.isGameOver) return;
     
@@ -1042,6 +1045,7 @@
     const spot = SPOTS[state.currentSpotKey];
     const powerRatio = state.power / 100;
     
+    // Increased Velocity for Punchy Fast Arcade Arc
     const minVel = spotKeyVelocityMin(state.currentSpotKey);
     const maxVel = spotKeyVelocityMax(state.currentSpotKey);
     const v0 = minVel + powerRatio * (maxVel - minVel);
@@ -1056,24 +1060,24 @@
     ball.hitBackboard = false;
     ball.prevY = ball.y;
 
-    // Hard Safety Timer: Force reset ball if stuck in mid-air for > 2.5 seconds!
+    // Hard Safety Timer: Force reset ball if stuck in mid-air for > 3.0 seconds!
     if (state.safetyTimer) clearTimeout(state.safetyTimer);
     state.safetyTimer = setTimeout(() => {
       if (ball.inAir) {
         handleShotFinished();
       }
-    }, 2500);
+    }, 3000);
 
     state.shotsTaken++;
     updateScoreboardUI();
   }
 
   function spotKeyVelocityMin(spotKey) {
-    return spotKey === '3pt' ? 14.5 : 12.0;
+    return spotKey === '3pt' ? 17.5 : 14.5;
   }
 
   function spotKeyVelocityMax(spotKey) {
-    return spotKey === '3pt' ? 24.5 : 20.0;
+    return spotKey === '3pt' ? 29.5 : 24.5;
   }
 
   // --- Physics & Collision Engine ---
@@ -1100,7 +1104,7 @@
     if (ball.trail.length > 8) ball.trail.shift();
 
     const steps = 4;
-    const gravity = 0.45 / steps;
+    const gravity = 0.58 / steps;
 
     for (let i = 0; i < steps; i++) {
       ball.prevY = ball.y;
@@ -1127,21 +1131,21 @@
       checkRimPointCollision(rimFront);
       checkRimPointCollision(rimBack);
 
-      // Widened & Ultra-Accurate Net Score Detection Box
+      // Widened Net Score Detection Box
       if (
         !ball.scored &&
         ball.vy > 0 &&
         ball.prevY < COURT.hoopY &&
         ball.y >= COURT.hoopY &&
-        ball.x >= rimFront.x - 2 &&
-        ball.x <= rimBack.x + 2
+        ball.x >= rimFront.x - 4 &&
+        ball.x <= rimBack.x + 4
       ) {
         handleScoreSuccess();
         break;
       }
 
-      // Reset immediately on floor contact or out of bounds
-      if (ball.y + ball.radius >= COURT.floorY) {
+      // Reset on floor contact or out of bounds (only if not scored yet)
+      if (!ball.scored && ball.y + ball.radius >= COURT.floorY) {
         ball.y = COURT.floorY - ball.radius;
         playBounceSound();
         handleShotFinished();
@@ -1153,8 +1157,6 @@
         break;
       }
     }
-
-    updateParticles();
   }
 
   function checkRimPointCollision(rimPt) {
@@ -1206,30 +1208,39 @@
       }
     }
 
-    state.netSwishTimer = 25;
-    createSwishParticles(COURT.hoopX - COURT.rimWidth / 2, COURT.hoopY + 10);
+    state.netSwishTimer = 30;
     triggerHaptic(50);
 
-    // Record Shot Breakdown Types
+    const hoopCenterX = COURT.hoopX - COURT.rimWidth / 2;
+    const hoopY = COURT.hoopY - 15;
+
+    // High-Octane Arcade Floating Score Text (Replaces Confetti)
     if (ball.hitBackboard && !ball.hitRim) {
       state.bankCount++;
       playSwishSound();
+      addFloatingScoreText(`+${pts} BANK SHOT! 🏦`, '#00e5ff', hoopCenterX, hoopY);
     } else if (!ball.hitRim) {
       state.swishCount++;
       playSwishSound();
       playCheerSound();
+      addFloatingScoreText(`+${pts} SWISH! ✨`, '#00e676', hoopCenterX, hoopY);
     } else {
       state.rimBucketCount++;
       playSwishSound();
+      addFloatingScoreText(`+${pts} PTS! 🎯`, '#ffbd00', hoopCenterX, hoopY);
+    }
+
+    if (state.streak >= 3) {
+      addFloatingScoreText(`STREAK x${state.streak}! 🔥`, '#ff6b00', hoopCenterX, hoopY - 22);
     }
 
     updateScoreboardUI();
 
-    // 160ms reset delay to let net swish animation render smoothly before ball returns to hand
+    // 350ms reset delay to let bank shots and swishes cleanly pass through net before returning to hand
     if (state.scoreResetTimeout) clearTimeout(state.scoreResetTimeout);
     state.scoreResetTimeout = setTimeout(() => {
       handleShotFinished();
-    }, 160);
+    }, 350);
   }
 
   function handleShotFinished() {
@@ -1276,7 +1287,7 @@
     drawBallTrail();
     drawBasketball();
     if (state.gameMode === 'mp') drawOpponentShooter();
-    drawParticles();
+    updateAndDrawFloatingTexts();
     drawAimGuideHud();
     drawCanvasTimerHud();
   }
@@ -1356,14 +1367,28 @@
     ctx.lineWidth = 3;
     ctx.strokeRect(COURT.backboardX - 1, COURT.hoopY - 45, 2, 50);
 
-    ctx.strokeStyle = '#ff3d00';
-    ctx.lineWidth = 6;
-    ctx.beginPath();
-    ctx.moveTo(rimFront.x, rimFront.y);
-    ctx.lineTo(rimBack.x, rimBack.y);
-    ctx.stroke();
+    // Neon Rim Energy Flare on Score
+    if (state.netSwishTimer > 0) {
+      ctx.save();
+      ctx.shadowColor = '#00e5ff';
+      ctx.shadowBlur = 18;
+      ctx.strokeStyle = '#00e5ff';
+      ctx.lineWidth = 8;
+      ctx.beginPath();
+      ctx.moveTo(rimFront.x, rimFront.y);
+      ctx.lineTo(rimBack.x, rimBack.y);
+      ctx.stroke();
+      ctx.restore();
+    } else {
+      ctx.strokeStyle = '#ff3d00';
+      ctx.lineWidth = 6;
+      ctx.beginPath();
+      ctx.moveTo(rimFront.x, rimFront.y);
+      ctx.lineTo(rimBack.x, rimBack.y);
+      ctx.stroke();
+    }
 
-    ctx.fillStyle = '#ff3d00';
+    ctx.fillStyle = state.netSwishTimer > 0 ? '#00e5ff' : '#ff3d00';
     ctx.beginPath();
     ctx.arc(rimFront.x, rimFront.y, COURT.rimRadius + 2, 0, Math.PI * 2);
     ctx.arc(rimBack.x, rimBack.y, COURT.rimRadius + 2, 0, Math.PI * 2);
@@ -1373,7 +1398,7 @@
     const netBottomY = COURT.hoopY + 45;
     const swishOffset = state.netSwishTimer > 0 ? Math.sin(state.netSwishTimer * 0.4) * 12 : 0;
 
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+    ctx.strokeStyle = state.netSwishTimer > 0 ? 'rgba(0, 229, 255, 0.95)' : 'rgba(255, 255, 255, 0.85)';
     ctx.lineWidth = 1.8;
 
     const netSegments = 5;
@@ -1478,7 +1503,7 @@
     for (let step = 0; step < 30; step++) {
       simX += vx * 1.2;
       simY += vy * 1.2;
-      vy += 0.45 * 1.2;
+      vy += 0.58 * 1.2;
 
       ctx.lineTo(simX, simY);
       if (simY >= COURT.floorY || simX >= canvas.width) break;
@@ -1552,18 +1577,6 @@
     ctx.stroke();
 
     ctx.restore();
-  }
-
-  function drawParticles() {
-    for (let p of particles) {
-      ctx.save();
-      ctx.globalAlpha = p.life;
-      ctx.fillStyle = p.color;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-    }
   }
 
   function drawAimGuideHud() {
