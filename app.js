@@ -492,41 +492,25 @@
     }, 500);
   }
 
-  // --- Global Leaderboard Manager ---
-  const DEFAULT_LB_TIMER = [
-    { country: '🇸🇬', name: '@codelaju', score: 48, accuracy: 92 },
-    { country: '🇸🇬', name: 'SG_Hooper', score: 42, accuracy: 85 },
-    { country: '🇲🇾', name: 'KL_Shooter', score: 39, accuracy: 81 },
-    { country: '🇮🇩', name: 'Jkt_Bucket', score: 35, accuracy: 78 },
-    { country: '🇯🇵', name: 'Tokyo_3pt', score: 31, accuracy: 75 }
-  ];
-
-  const DEFAULT_LB_ENDLESS = [
-    { country: '🇸🇬', name: '@codelaju', score: 120, accuracy: 95 },
-    { country: '🇺🇸', name: 'Mamba_24', score: 98, accuracy: 90 },
-    { country: '🇲🇾', name: 'Penang_King', score: 84, accuracy: 84 }
-  ];
-
+  // --- Global Leaderboard Manager (100% Real-Time Player Submissions) ---
   let currentLbTab = 'timer';
   let lastSubmittedId = null;
 
   function loadLeaderboard(mode) {
-    const key = mode === 'timer' ? 'basketbola_lb_timer' : 'basketbola_lb_endless';
-    const defaults = mode === 'timer' ? DEFAULT_LB_TIMER : DEFAULT_LB_ENDLESS;
+    const key = mode === 'timer' ? 'basketbola_real_lb_timer' : 'basketbola_real_lb_endless';
     const stored = localStorage.getItem(key);
     if (!stored) {
-      localStorage.setItem(key, JSON.stringify(defaults));
-      return defaults;
+      return [];
     }
     try {
       return JSON.parse(stored);
     } catch (e) {
-      return defaults;
+      return [];
     }
   }
 
   function saveLeaderboard(mode, list) {
-    const key = mode === 'timer' ? 'basketbola_lb_timer' : 'basketbola_lb_endless';
+    const key = mode === 'timer' ? 'basketbola_real_lb_timer' : 'basketbola_real_lb_endless';
     localStorage.setItem(key, JSON.stringify(list));
   }
 
@@ -537,6 +521,18 @@
 
     const list = loadLeaderboard(mode);
     lbTableBody.innerHTML = '';
+
+    if (list.length === 0) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td colspan="4" style="text-align: center; padding: 24px 12px; color: var(--text-muted); font-size: 0.9rem; line-height: 1.6;">
+          🏀 <strong>No real scores recorded yet!</strong><br>
+          Play a game and submit your score to claim 1st place!
+        </td>
+      `;
+      lbTableBody.appendChild(tr);
+      return;
+    }
 
     list.forEach((item, index) => {
       const tr = document.createElement('tr');
