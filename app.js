@@ -1236,11 +1236,11 @@
 
     updateScoreboardUI();
 
-    // 350ms reset delay to let bank shots and swishes cleanly pass through net before returning to hand
+    // 140ms reset delay to let bank shots and swishes cleanly pass through net before returning to hand
     if (state.scoreResetTimeout) clearTimeout(state.scoreResetTimeout);
     state.scoreResetTimeout = setTimeout(() => {
       handleShotFinished();
-    }, 350);
+    }, 140);
   }
 
   function handleShotFinished() {
