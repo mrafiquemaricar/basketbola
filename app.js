@@ -1073,11 +1073,11 @@
   }
 
   function spotKeyVelocityMin(spotKey) {
-    return spotKey === '3pt' ? 17.5 : 14.5;
+    return spotKey === '3pt' ? 19.5 : 16.0;
   }
 
   function spotKeyVelocityMax(spotKey) {
-    return spotKey === '3pt' ? 29.5 : 24.5;
+    return spotKey === '3pt' ? 32.5 : 27.0;
   }
 
   // --- Physics & Collision Engine ---
@@ -1104,7 +1104,7 @@
     if (ball.trail.length > 8) ball.trail.shift();
 
     const steps = 4;
-    const gravity = 0.58 / steps;
+    const gravity = 0.68 / steps;
 
     for (let i = 0; i < steps; i++) {
       ball.prevY = ball.y;
@@ -1236,11 +1236,11 @@
 
     updateScoreboardUI();
 
-    // 140ms reset delay to let bank shots and swishes cleanly pass through net before returning to hand
+    // 150ms reset delay to let bank shots and swishes cleanly pass through net before returning to hand
     if (state.scoreResetTimeout) clearTimeout(state.scoreResetTimeout);
     state.scoreResetTimeout = setTimeout(() => {
       handleShotFinished();
-    }, 140);
+    }, 150);
   }
 
   function handleShotFinished() {
@@ -1503,7 +1503,7 @@
     for (let step = 0; step < 30; step++) {
       simX += vx * 1.2;
       simY += vy * 1.2;
-      vy += 0.58 * 1.2;
+      vy += 0.68 * 1.2;
 
       ctx.lineTo(simX, simY);
       if (simY >= COURT.floorY || simX >= canvas.width) break;
