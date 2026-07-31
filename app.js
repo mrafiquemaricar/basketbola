@@ -492,34 +492,105 @@
     }, 500);
   }
 
-  // --- Global Leaderboard Manager (100% Real-Time Player Submissions) ---
+  // --- Global Firebase Firestore Real-Time Leaderboard Engine ---
+  const FIRESTORE_PROJECT_ID = 'basketbola-game-arcade';
   let currentLbTab = 'timer';
   let lastSubmittedId = null;
 
-  function loadLeaderboard(mode) {
-    const key = mode === 'timer' ? 'basketbola_real_lb_timer' : 'basketbola_real_lb_endless';
-    const stored = localStorage.getItem(key);
-    if (!stored) {
-      return [];
-    }
-    try {
-      return JSON.parse(stored);
-    } catch (e) {
-      return [];
-    }
+  function getFirestoreEndpoint(mode) {
+    const coll = mode === 'timer' ? 'leaderboard_timer' : 'leaderboard_endless';
+    return `https://firestore.googleapis.com/v1/projects/${FIRESTORE_PROJECT_ID}/databases/(default)/documents/${coll}`;
   }
 
-  function saveLeaderboard(mode, list) {
+  function loadLocalLeaderboard(mode) {
+    const key = mode === 'timer' ? 'basketbola_real_lb_timer' : 'basketbola_real_lb_endless';
+    const stored = localStorage.getItem(key);
+    if (!stored) return [];
+    try { return JSON.parse(stored); } catch (e) { return []; }
+  }
+
+  function saveLocalLeaderboard(mode, list) {
     const key = mode === 'timer' ? 'basketbola_real_lb_timer' : 'basketbola_real_lb_endless';
     localStorage.setItem(key, JSON.stringify(list));
   }
 
-  function renderLeaderboardTable(mode) {
+  async function fetchFirestoreLeaderboard(mode) {
+    try {
+      const url = getFirestoreEndpoint(mode);
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`Firestore HTTP ${res.status}`);
+      const data = await res.json();
+      if (!data.documents) return [];
+
+      const list = data.documents.map(doc => {
+        const fields = doc.fields || {};
+        return {
+          id: fields.id ? fields.id.stringValue : doc.name,
+          name: fields.name ? fields.name.stringValue : 'Anonymous',
+          country: fields.country ? fields.country.stringValue : '🌐',
+          score: fields.score ? parseInt(fields.score.integerValue || fields.score.doubleValue || '0', 10) : 0,
+          accuracy: fields.accuracy ? parseInt(fields.accuracy.integerValue || fields.accuracy.doubleValue || '0', 10) : 0,
+          timestamp: fields.timestamp ? parseInt(fields.timestamp.integerValue || '0', 10) : 0
+        };
+      });
+
+      return list;
+    } catch (e) {
+      console.warn("Firestore fetch warning (using local backup cache):", e);
+      return [];
+    }
+  }
+
+  async function pushFirestoreLeaderboardEntry(mode, entry) {
+    try {
+      const url = getFirestoreEndpoint(mode);
+      const payload = {
+        fields: {
+          id: { stringValue: entry.id },
+          name: { stringValue: entry.name },
+          country: { stringValue: entry.country },
+          score: { integerValue: entry.score.toString() },
+          accuracy: { integerValue: entry.accuracy.toString() },
+          timestamp: { integerValue: entry.timestamp.toString() }
+        }
+      };
+
+      fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }).catch(err => console.warn("Firestore push failed, local backup used:", err));
+    } catch (e) {
+      console.warn("Firestore push error:", e);
+    }
+  }
+
+  async function renderLeaderboardTable(mode) {
     currentLbTab = mode;
     lbTabTimer.classList.toggle('active', mode === 'timer');
     lbTabEndless.classList.toggle('active', mode === 'endless');
 
-    const list = loadLeaderboard(mode);
+    // 1. Render local cache immediately for zero latency
+    let localList = loadLocalLeaderboard(mode);
+    renderTableRows(localList);
+
+    // 2. Fetch live global cloud documents from Firebase Firestore
+    const cloudList = await fetchFirestoreLeaderboard(mode);
+    
+    // Merge cloud and local entries uniquely by ID
+    const mergedMap = new Map();
+    localList.forEach(item => mergedMap.set(item.id || item.name + item.score, item));
+    cloudList.forEach(item => mergedMap.set(item.id || item.name + item.score, item));
+
+    const combinedList = Array.from(mergedMap.values());
+    combinedList.sort((a, b) => b.score - a.score || b.accuracy - a.accuracy);
+    const top20 = combinedList.slice(0, 20);
+
+    saveLocalLeaderboard(mode, top20);
+    renderTableRows(top20);
+  }
+
+  function renderTableRows(list) {
     lbTableBody.innerHTML = '';
 
     if (list.length === 0) {
@@ -569,23 +640,28 @@
     localStorage.setItem('basketbola_last_country', country);
 
     const mode = state.gameMode === 'mp' ? 'timer' : state.gameMode;
-    const list = loadLeaderboard(mode);
+    const localList = loadLocalLeaderboard(mode);
 
     const pct = state.shotsTaken > 0 ? Math.round((state.shotsMade / state.shotsTaken) * 100) : 0;
-    const submissionId = Date.now().toString();
+    const submissionId = Date.now().toString() + '-' + Math.floor(Math.random() * 1000);
     lastSubmittedId = submissionId;
 
-    list.push({
+    const newEntry = {
       id: submissionId,
       country: country,
       name: name,
       score: state.score,
-      accuracy: pct
-    });
+      accuracy: pct,
+      timestamp: Date.now()
+    };
 
-    list.sort((a, b) => b.score - a.score || b.accuracy - a.accuracy);
-    const top15 = list.slice(0, 15);
-    saveLeaderboard(mode, top15);
+    // Save locally
+    localList.push(newEntry);
+    localList.sort((a, b) => b.score - a.score || b.accuracy - a.accuracy);
+    saveLocalLeaderboard(mode, localList.slice(0, 20));
+
+    // Push live to Firebase Firestore Cloud
+    pushFirestoreLeaderboardEntry(mode, newEntry);
 
     triggerHaptic(60);
 
